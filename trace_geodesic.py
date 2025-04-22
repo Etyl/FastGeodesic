@@ -1,13 +1,14 @@
 import numpy as np
+from typing import List,Optional
 
 from mesh import Mesh, MeshPoint
 
 class GeodesicPath:
     def __init__(self):
-        self.start = None
-        self.end = None
-        self.path = []
-        self.dirs = []
+        self.start : Optional[MeshPoint] = None
+        self.end : Optional[MeshPoint] = None
+        self.path : List[np.ndarray] = []
+        self.dirs : List[np.ndarray] = []
 
 
 def triangle_normal(p0, p1, p2):
@@ -33,14 +34,6 @@ def length(v):
     """Compute the length of a vector."""
     return np.linalg.norm(v)
 
-def eval_position(mesh, point):
-    """Evaluate the position on the mesh given a mesh point."""
-    face = point.face
-    uv = point.uv
-    p0 = mesh.positions[mesh.triangles[face][0]]
-    p1 = mesh.positions[mesh.triangles[face][1]]
-    p2 = mesh.positions[mesh.triangles[face][2]]
-    return (1 - uv[0] - uv[1]) * p0 + uv[0] * p1 + uv[1] * p2
 
 def tri_bary_coords(p0, p1, p2, p):
     """Compute barycentric coordinates of p in the triangle (p0, p1, p2)."""
@@ -64,7 +57,7 @@ def tri_bary_coords(p0, p1, p2, p):
     
     return np.array([u, v, w])
 
-def point_is_edge(point):
+def point_is_edge(point: MeshPoint):
     """Check if a mesh point is on an edge and return the edge index."""
     uv = point.uv
     eps = 1e-5
@@ -78,7 +71,7 @@ def point_is_edge(point):
     
     return False, -1
 
-def point_is_vert(point):
+def point_is_vert(point: MeshPoint):
     """Check if a mesh point is on a vertex and return the vertex index."""
     uv = point.uv
     eps = 1e-5
@@ -122,24 +115,8 @@ def project_vec(v, normal):
     """Project a vector onto a plane defined by its normal."""
     return v - dot(v, normal) * normal
 
-def from_2d_to_3d_vector(triangles, positions, dir_2d, face_id):
-    """Convert a 2D direction to a 3D direction on a triangle."""
-    # Get the triangle vertices
-    p0 = positions[triangles[face_id][0]]
-    p1 = positions[triangles[face_id][1]]
-    p2 = positions[triangles[face_id][2]]
-    
-    # Get the triangle edges
-    e1 = p1 - p0
-    e2 = p2 - p0
-    
-    # Normalize the edges to form a basis
-    e1 = normalize(e1)
-    e2 = normalize(e2 - dot(e2, e1) * e1)
-    
-    # Convert 2D direction to 3D using the basis
-    return dir_2d[0] * e1 + dir_2d[1] * e2
 
+# TODO optimize
 def closest_point_parameter_coplanar(x, v, p1, p2):
     # Normalize direction vectors
     v = v / np.linalg.norm(v)
@@ -281,13 +258,16 @@ def find_in_vector(vec, val):
             return i
     return -1
 
-def check_point(point):
+def check_point(point:MeshPoint):
     """Check if a mesh point is valid."""
     eps = 1e-5
     assert point.uv[0] >= -eps and point.uv[1] >= -eps
     assert point.uv[0] + point.uv[1] <= 1 + 2*eps
 
 def signed_angle(A, B, N):
+    """
+    Compute the signed angle between two vectors A and B with respect to a normal vector N.
+    """
     N = N / np.linalg.norm(N)
     A = A - (A@N)*N
     B = B - (B@N)*N
@@ -305,17 +285,6 @@ def signed_angle(A, B, N):
 def compute_parallel_transport(mesh, curr_pos, curr_tri, next_pos, next_tri, dir_3d):
     """
     Compute the parallel transport of a vector from one triangle to another.
-    
-    Args:
-        mesh: The mesh
-        curr_pos: The current position
-        curr_tri: The current triangle
-        next_pos: The next position
-        next_tri: The next triangle
-        dir_3d: The direction vector
-    
-    Returns:
-        The transported direction vector
     """
     if curr_tri == next_tri:
         return dir_3d
@@ -350,6 +319,9 @@ def compute_parallel_transport(mesh, curr_pos, curr_tri, next_pos, next_tri, dir
 
 
 def compute_parallel_transport_vertex(mesh:Mesh, curr_pos, curr_tri, vertex_id, dir_3d):
+    """
+    Compute the parallel transport of a vector at a vertex.
+    """
     connected_triangles = mesh.v2t[vertex_id]
     total_angle = 0.0
     for tri_id in connected_triangles:
@@ -433,7 +405,7 @@ def bary_to_uv(bary):
     """Convert barycentric coordinates to UV coordinates."""
     return np.array([bary[1], bary[2]])
 
-def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir):
+def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
     """
     Compute the straightest geodesic path on a mesh.
     
@@ -455,7 +427,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir):
     
     next_bary = np.zeros(3)
     curr_bary = np.array([1 - start.uv[0] - start.uv[1], start.uv[0], start.uv[1]])
-    curr_pos = eval_position(mesh, start)
+    curr_pos = start.interpolate(mesh)
     next_pos = np.zeros(3)
     curr_point = start
     point_normal = np.zeros(3)
@@ -572,31 +544,3 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir):
     
     return geodesic
 
-def compute_all_edge_midpoints(mesh):
-    """Compute midpoints for all edges in the mesh."""
-    midpoints = []
-    
-    # Keep track of processed edges to avoid duplicates
-    processed_edges = set()
-    
-    for tri_idx, tri in enumerate(mesh.triangles):
-        # Check each edge of the triangle
-        edges = [(0, 1), (1, 2), (2, 0)]
-        
-        for i, j in edges:
-            v1 = tri[i]
-            v2 = tri[j]
-            
-            # Sort vertices to create a unique edge identifier
-            edge = tuple(sorted([v1, v2]))
-            
-            if edge not in processed_edges:
-                processed_edges.add(edge)
-                
-                # Compute midpoint
-                p1 = mesh.positions[v1]
-                p2 = mesh.positions[v2]
-                midpoint = (p1 + p2) / 2.0
-                midpoints.append(midpoint)
-    
-    return np.array(midpoints)

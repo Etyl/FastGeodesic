@@ -6,8 +6,6 @@ class Mesh:
         self.triangles = []
         self.adjacencies = []
         self.normals = []
-        self.solver = None
-        self.angles = None
         self.v2t = []
 
 class MeshPoint:
@@ -15,7 +13,7 @@ class MeshPoint:
         self.face = face
         self.uv = uv
 
-    def interpolate(self, mesh):
+    def interpolate(self, mesh:Mesh):
         face = self.face
         uv = self.uv
         p0 = mesh.positions[mesh.triangles[face][0]]
