@@ -6,34 +6,8 @@ from matplotlib.colors import LightSource
 
 from trace_geodesic import straightest_geodesic
 from mesh import Mesh, MeshPoint
-from mesh_loader import compute_adjacencies, compute_vertex_normals, compute_vertex_to_triangle_map
+from mesh_loader import create_tetrahedron, load_mesh_from_obj
 
-
-def create_tetrahedron():
-    """Create a tetrahedron mesh."""
-    mesh = Mesh()
-    
-    # Define vertices
-    mesh.positions = [
-        np.array([0.0, 0.0, 0.0]),  # Vertex 0
-        np.array([1.0, 0.0, 0.0]),  # Vertex 1
-        np.array([0.0, 1.0, 0.0]),  # Vertex 2
-        np.array([0.0, 0.0, 1.0])   # Vertex 3
-    ]
-    
-    # Define triangles (faces)
-    mesh.triangles = np.array([
-        [0, 1, 2],  # Face 0: Base triangle
-        [0, 1, 3],  # Face 1: Side triangle
-        [1, 2, 3],  # Face 2: Side triangle
-        [0, 2, 3]   # Face 3: Side triangle
-    ],dtype=int)
-
-    compute_adjacencies(mesh)
-    compute_vertex_normals(mesh)
-    compute_vertex_to_triangle_map(mesh)
-    
-    return mesh
 
 def eval_position(mesh, point):
     """Evaluate the position on the mesh given a mesh point."""
@@ -81,12 +55,12 @@ def visualize_mesh_and_path(mesh, path, arrow_scale=0.2):
         colors.append((*face_colors[i % len(face_colors)][:3], 0.3))  # More transparent for other faces
     
     # Create 3D polygons
-    poly = Poly3DCollection(faces, facecolors=colors, linewidths=1, edgecolors='black', alpha=0.5)
+    poly = Poly3DCollection(faces, linewidths=0.3, edgecolors='black', alpha=0.5)
     ax.add_collection3d(poly)
     
     # 2. Plot vertices
     vertices = np.array(mesh.positions)
-    ax.scatter(vertices[:, 0], vertices[:, 1], vertices[:, 2], color='black', s=50, label='Vertices')
+    ax.scatter(vertices[:, 0], vertices[:, 1], vertices[:, 2], color='black', s=10, label='Vertices')
     
     # 3. Plot the path
     path_points = np.array(path.path)
@@ -159,8 +133,8 @@ def visualize_mesh_and_path(mesh, path, arrow_scale=0.2):
     plt.show()
 
 def main():
-    # Create a tetrahedron mesh
-    mesh = create_tetrahedron()
+    # mesh = create_tetrahedron()
+    mesh = load_mesh_from_obj("./data/cat_head.obj")
     
     # Define a starting point on a face (barycentric coordinates on face 0)
     start = MeshPoint(0, np.array([0.5, 0.5]))  # On face 0 with UV coordinates (0.3, 0.3)

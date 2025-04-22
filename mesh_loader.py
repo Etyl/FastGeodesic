@@ -4,9 +4,35 @@ from trace_geodesic import triangle_normal, normalize
 from mesh import Mesh
 
 
+def create_tetrahedron():
+    """Create a tetrahedron mesh."""
+    mesh = Mesh()
+    
+    # Define vertices
+    mesh.positions = [
+        np.array([0.0, 0.0, 0.0]),  # Vertex 0
+        np.array([1.0, 0.0, 0.0]),  # Vertex 1
+        np.array([0.0, 1.0, 0.0]),  # Vertex 2
+        np.array([0.0, 0.0, 1.0])   # Vertex 3
+    ]
+    
+    # Define triangles (faces)
+    mesh.triangles = np.array([
+        [0, 1, 2],  # Face 0: Base triangle
+        [0, 1, 3],  # Face 1: Side triangle
+        [1, 2, 3],  # Face 2: Side triangle
+        [0, 2, 3]   # Face 3: Side triangle
+    ],dtype=int)
+
+    compute_adjacencies(mesh)
+    compute_vertex_normals(mesh)
+    compute_vertex_to_triangle_map(mesh)
+    
+    return mesh
+
 def load_mesh_from_obj(filename):
     """Load a mesh from an OBJ file."""
-    mesh = BezierMesh()
+    mesh = Mesh()
     
     with open(filename, 'r') as f:
         for line in f:
