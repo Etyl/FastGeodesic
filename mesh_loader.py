@@ -1,6 +1,7 @@
 import numpy as np
 
-from bezier import BezierMesh, triangle_normal, normalize
+from trace_geodesic import triangle_normal, normalize
+from mesh import Mesh
 
 
 def load_mesh_from_obj(filename):

@@ -4,13 +4,14 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib.colors import LightSource
 
-from bezier import BezierMesh, MeshPoint, straightest_geodesic_biermann
+from trace_geodesic import straightest_geodesic
+from mesh import Mesh, MeshPoint
 from mesh_loader import compute_adjacencies, compute_vertex_normals, compute_vertex_to_triangle_map
 
 
 def create_tetrahedron():
     """Create a tetrahedron mesh."""
-    mesh = BezierMesh()
+    mesh = Mesh()
     
     # Define vertices
     mesh.positions = [
@@ -170,7 +171,7 @@ def main():
     print("Computing geodesic path...")
     
     # Compute the geodesic path
-    path = straightest_geodesic_biermann(mesh, start, direction)
+    path = straightest_geodesic(mesh, start, direction)
     
     # Visualize the mesh and path
     print("\nVisualizing mesh and path...")

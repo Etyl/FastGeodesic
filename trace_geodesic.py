@@ -1,27 +1,6 @@
 import numpy as np
 
-class BezierMesh:
-    def __init__(self):
-        self.positions = []
-        self.triangles = []
-        self.adjacencies = []
-        self.normals = []
-        self.solver = None
-        self.angles = None
-        self.v2t = []
-
-class MeshPoint:
-    def __init__(self, face=0, uv=np.array([0.0, 0.0])):
-        self.face = face
-        self.uv = uv
-
-    def interpolate(self, mesh):
-        face = self.face
-        uv = self.uv
-        p0 = mesh.positions[mesh.triangles[face][0]]
-        p1 = mesh.positions[mesh.triangles[face][1]]
-        p2 = mesh.positions[mesh.triangles[face][2]]
-        return (1 - uv[0] - uv[1]) * p0 + uv[0] * p1 + uv[1] * p2
+from mesh import Mesh, MeshPoint
 
 class GeodesicPath:
     def __init__(self):
@@ -370,7 +349,7 @@ def compute_parallel_transport(mesh, curr_pos, curr_tri, next_pos, next_tri, dir
     return dir_3d * np.cos(angle) + cross(axis, dir_3d) * np.sin(angle) + axis * dot(axis, dir_3d) * (1 - np.cos(angle))
 
 
-def compute_parallel_transport_vertex(mesh:BezierMesh, curr_pos, curr_tri, vertex_id, dir_3d):
+def compute_parallel_transport_vertex(mesh:Mesh, curr_pos, curr_tri, vertex_id, dir_3d):
     connected_triangles = mesh.v2t[vertex_id]
     total_angle = 0.0
     for tri_id in connected_triangles:
@@ -454,7 +433,7 @@ def bary_to_uv(bary):
     """Convert barycentric coordinates to UV coordinates."""
     return np.array([bary[1], bary[2]])
 
-def straightest_geodesic_biermann(mesh:BezierMesh, start:MeshPoint, dir):
+def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir):
     """
     Compute the straightest geodesic path on a mesh.
     
