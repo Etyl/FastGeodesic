@@ -1,11 +1,58 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from typing import List
 
 from mesh import MeshPoint, Mesh
 from trace_geodesic import GeodesicPath
 
-def visualize_mesh_and_path(mesh:Mesh, path:GeodesicPath, arrow_scale=0.2):
+
+def plot_path(path: GeodesicPath, mesh: Mesh, ax, arrow_scale=0.2):
+    path_points = np.array(path.path)
+    ax.plot(path_points[:, 0], path_points[:, 1], path_points[:, 2], 'o-', 
+            color='magenta', linewidth=3, markersize=8)
+    
+    # 4. Plot direction vectors at each path point
+    if hasattr(path, 'dirs') and len(path.dirs) > 0:
+        dirs = np.array(path.dirs)
+        
+        # Find an appropriate scale for the arrows
+        if len(path_points) > 1:
+            # Calculate average segment length
+            segments = path_points[1:] - path_points[:-1]
+            avg_segment_length = np.mean(np.sqrt(np.sum(segments**2, axis=1)))
+            arrow_length = avg_segment_length * arrow_scale
+        else:
+            # Default if only one point
+            arrow_length = 0.1
+        
+        # Make all direction vectors the same length for clearer visualization
+        normalized_dirs = np.array([dir / np.linalg.norm(dir) * arrow_length for dir in dirs])
+        
+        # Draw arrows for each point
+        for i in range(len(path_points)):
+            if i < len(normalized_dirs):  # Ensure we have a direction vector
+                start = path_points[i]
+                end = start + normalized_dirs[i]
+                
+                # Draw arrow
+                ax.quiver(
+                    start[0], start[1], start[2],           # starting point
+                    normalized_dirs[i][0], normalized_dirs[i][1], normalized_dirs[i][2],  # direction
+                    color='orange', alpha=1.0, arrow_length_ratio=0.3,
+                    linewidth=2
+                )
+    
+    # 5. Add start and end points with different markers
+    start_pos = path.start.interpolate(mesh)
+    end_pos = path.end.interpolate(mesh)
+    
+    ax.scatter([start_pos[0]], [start_pos[1]], [start_pos[2]], color='lime', s=100, marker='*')
+    ax.scatter([end_pos[0]], [end_pos[1]], [end_pos[2]], color='red', s=100, marker='X')
+    
+
+
+def visualize_mesh_and_path(mesh:Mesh, paths:List[GeodesicPath], arrow_scale=0.2):
     """
     Visualize the mesh and geodesic path in 3D, including direction vectors at each point.
     
@@ -45,47 +92,8 @@ def visualize_mesh_and_path(mesh:Mesh, path:GeodesicPath, arrow_scale=0.2):
     ax.scatter(vertices[:, 0], vertices[:, 1], vertices[:, 2], color='black', s=10, label='Vertices')
     
     # 3. Plot the path
-    path_points = np.array(path.path)
-    ax.plot(path_points[:, 0], path_points[:, 1], path_points[:, 2], 'o-', 
-            color='magenta', linewidth=3, markersize=8, label='Geodesic Path')
-    
-    # 4. Plot direction vectors at each path point
-    if hasattr(path, 'dirs') and len(path.dirs) > 0:
-        dirs = np.array(path.dirs)
-        
-        # Find an appropriate scale for the arrows
-        if len(path_points) > 1:
-            # Calculate average segment length
-            segments = path_points[1:] - path_points[:-1]
-            avg_segment_length = np.mean(np.sqrt(np.sum(segments**2, axis=1)))
-            arrow_length = avg_segment_length * arrow_scale
-        else:
-            # Default if only one point
-            arrow_length = 0.1
-        
-        # Make all direction vectors the same length for clearer visualization
-        normalized_dirs = np.array([dir / np.linalg.norm(dir) * arrow_length for dir in dirs])
-        
-        # Draw arrows for each point
-        for i in range(len(path_points)):
-            if i < len(normalized_dirs):  # Ensure we have a direction vector
-                start = path_points[i]
-                end = start + normalized_dirs[i]
-                
-                # Draw arrow
-                ax.quiver(
-                    start[0], start[1], start[2],           # starting point
-                    normalized_dirs[i][0], normalized_dirs[i][1], normalized_dirs[i][2],  # direction
-                    color='orange', alpha=1.0, arrow_length_ratio=0.3,
-                    linewidth=2
-                )
-    
-    # 5. Add start and end points with different markers
-    start_pos = path.start.interpolate(mesh)
-    end_pos = path.end.interpolate(mesh)
-    
-    ax.scatter([start_pos[0]], [start_pos[1]], [start_pos[2]], color='lime', s=100, marker='*', label='Start Point')
-    ax.scatter([end_pos[0]], [end_pos[1]], [end_pos[2]], color='red', s=100, marker='X', label='End Point')
+    for path in paths:
+        plot_path(path, mesh, ax, arrow_scale)
     
     # Labels and title
     ax.set_xlabel('X')
