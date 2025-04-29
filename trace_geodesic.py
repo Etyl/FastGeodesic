@@ -119,35 +119,33 @@ def project_vec(v, normal):
 # TODO optimize
 def closest_point_parameter_coplanar(x, v, p1, p2):
     # Normalize direction vectors
-    v = v / np.linalg.norm(v)
+    v = v / length(v)
     
-    # Direction vector for the second line
     w = p2 - p1
-    w_norm = np.linalg.norm(w)
+    w_norm = length(w)
     
-    # Avoid division by zero
     if w_norm < 1e-10:
-        # If p1 and p2 are essentially the same point
-        t = np.dot(p1 - x, v)
+        # p1 and p2 are the same point
+        t = dot(p1 - x, v)
         closest_p1 = x + t * v
-        return t, closest_p1, p1, np.linalg.norm(closest_p1 - p1), False
-    
+        return t, closest_p1, p1, length(closest_p1 - p1), False
+
     w = w / w_norm
-    
+
     # Check if lines are parallel
-    cross_product = np.cross(v, w)
-    if np.linalg.norm(cross_product) < 1e-10:
+    cross_vw = cross(v, w)
+    if length(cross_vw) < 1e-10:
+        # Lines are parallel
         return -1
-    
-    # Construct the coefficient matrix
-    A = np.column_stack([-v, w])
-    b = x - p1
-    
-    # Solve the system
-    solution = np.linalg.lstsq(A, b, rcond=None)[0]
-    t = solution[0]
-    
+
+    # Vector from x to p1
+    r = p1 - x
+
+    # Compute t such that point x + t*v is closest to line through p1 and p2
+    t = (dot(r, v) - dot(r, w) * dot(v, w)) / (1 - dot(v, w)**2)
+
     return t
+
 
 
 def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_pos, next_bary,max_len):
@@ -174,7 +172,7 @@ def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_p
         p_j = positions[vj]
         
         edge_dir = p_j - p_i
-        normal = np.cross(dir_3d, edge_dir)
+        normal = cross(dir_3d, edge_dir)
         
         if length(normal) < 1e-10:
             continue
@@ -268,18 +266,18 @@ def signed_angle(A, B, N):
     """
     Compute the signed angle between two vectors A and B with respect to a normal vector N.
     """
-    N = N / np.linalg.norm(N)
-    A = A - (A@N)*N
-    B = B - (B@N)*N
+    N = N / length(N)
+    A = A - dot(A,N)*N
+    B = B - dot(B,N)*N
     if length(A) < 1e-10 or length(B) < 1e-10:
         return 0.0
-    A = A / np.linalg.norm(A)
-    B = B / np.linalg.norm(B)
+    A = A / length(A)
+    B = B / length(B)
 
-    cross = np.cross(A, B)
-    dot = np.dot(A, B)
-    sign = np.dot(N, cross)
-    angle = np.arctan2(sign, dot)
+    cross_prod = cross(A, B)
+    dot_prod = dot(A, B)
+    sign = dot(N, cross_prod)
+    angle = np.arctan2(sign, dot_prod)
     return angle  # in radians
 
 def compute_parallel_transport(mesh, curr_pos, curr_tri, next_pos, next_tri, dir_3d):
