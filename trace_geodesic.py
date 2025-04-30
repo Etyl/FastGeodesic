@@ -420,15 +420,11 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
     geodesic.path.append(start.interpolate(mesh))
     geodesic.dirs.append(normalize(dir))
     
-    is_edge, ke = point_is_edge(start)
-    is_vert, kv = point_is_vert(start)
-    
     next_bary = np.zeros(3)
     curr_bary = np.array([1 - start.uv[0] - start.uv[1], start.uv[0], start.uv[1]])
     curr_pos = start.interpolate(mesh)
     next_pos = np.zeros(3)
     curr_point = start
-    point_normal = np.zeros(3)
     tid_normal = np.zeros(3)
     curr_tri = start.face
     next_tri = -1
