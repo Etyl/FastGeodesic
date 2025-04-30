@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from typing import Tuple, List
 
 from trace_geodesic import straightest_geodesic, GeodesicPath, triangle_normal
 from mesh import MeshPoint, Mesh
@@ -16,7 +17,10 @@ def get_triangle_normal(mesh: Mesh, face_id: int) -> np.ndarray:
     p2 = mesh.positions[mesh.triangles[face_id][2]]
     return triangle_normal(p0, p1, p2)
 
-def diff_straighest_geodesic(mesh: Mesh, start: MeshPoint, dir: torch.tensor):
+def project_to_plane(dir, normal) -> torch.Tensor:
+    return dir - normal * torch.dot(dir, normal)
+
+def diff_straighest_geodesic(mesh: Mesh, start: MeshPoint, dir: torch.tensor) -> Tuple[GeodesicPath, torch.Tensor]:
     """
     Compute the geodesic path using finite differences for gradient computation.
     """
@@ -47,13 +51,16 @@ def diff_straighest_geodesic(mesh: Mesh, start: MeshPoint, dir: torch.tensor):
 
     R = torch.tensor(R, dtype=torch.float32)
     T = torch.tensor(T, dtype=torch.float32)
+    fixed_start = start.interpolate(mesh, tensor=True).detach()
+    start_point = start.interpolate(mesh, tensor=True)
 
-    return path, R @ (start.interpolate(mesh, tensor=True) + dir) + T    
+    return path, R @ (project_to_plane(start_point-fixed_start+dir, start_normal)+fixed_start) + T    
 
 
 if __name__ == "__main__":
     mesh = load_mesh_from_obj("./data/cat_head.obj")
     start = MeshPoint(0, np.array([0.3, 0.2]))
     dir = torch.tensor([1.0, 1.0, 1.0], dtype=torch.float32)
-    path,_ = diff_straighest_geodesic(mesh, start, dir)
+    path,end_point = diff_straighest_geodesic(mesh, start, dir)
+    print(end_point.grad_fn())
     visualize_mesh_and_path(mesh, [path])

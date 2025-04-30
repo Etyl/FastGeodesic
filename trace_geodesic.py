@@ -3,6 +3,10 @@ from typing import List,Optional
 
 from mesh import Mesh, MeshPoint
 
+# TODO: add docstrings to all functions
+# TODO: add type hints to all functions
+# TODO: gobal epsilons for numerical stability
+
 class GeodesicPath:
     def __init__(self):
         self.start : Optional[MeshPoint] = None
@@ -116,35 +120,37 @@ def project_vec(v, normal):
     return v - dot(v, normal) * normal
 
 
-# TODO optimize
-def closest_point_parameter_coplanar(x, v, p1, p2):
+def closest_point_parameter_coplanar(P1, d1, P2, d2):
+    """
+    Finds the closest points on two lines in 3D.
+    """
+    # Ensure numpy arrays
+    P1, d1 = np.array(P1, dtype=float), np.array(d1, dtype=float)
+    P2, d2 = np.array(P2, dtype=float), np.array(d2, dtype=float)
+
     # Normalize direction vectors
-    v = v / length(v)
-    
-    w = p2 - p1
-    w_norm = length(w)
-    
-    if w_norm < 1e-10:
-        # p1 and p2 are the same point
-        t = dot(p1 - x, v)
-        closest_p1 = x + t * v
-        return t, closest_p1, p1, length(closest_p1 - p1), False
+    d1_norm = d1 / np.linalg.norm(d1)
+    d2_norm = d2 / np.linalg.norm(d2)
 
-    w = w / w_norm
+    # Compute intermediate values
+    r = P1 - P2
+    a = np.dot(d1_norm, d1_norm)
+    b = np.dot(d1_norm, d2_norm)
+    c = np.dot(d2_norm, d2_norm)
+    d = np.dot(d1_norm, r)
+    e = np.dot(d2_norm, r)
 
-    # Check if lines are parallel
-    cross_vw = cross(v, w)
-    if length(cross_vw) < 1e-10:
-        # Lines are parallel
-        return -1
+    denominator = a * c - b * b
 
-    # Vector from x to p1
-    r = p1 - x
+    if abs(denominator) < 1e-6:
+        return -1,-1
 
-    # Compute t such that point x + t*v is closest to line through p1 and p2
-    t = (dot(r, v) - dot(r, w) * dot(v, w)) / (1 - dot(v, w)**2)
+    # Solve for parameters
+    t1 = (b * e - c * d) / denominator
+    t2 = (a * e - b * d) / denominator
 
-    return t
+    return t1,t2
+
 
 
 
@@ -178,9 +184,9 @@ def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_p
             continue
         
         # Find the intersection parameter t
-        t = closest_point_parameter_coplanar(curr_pos, dir_3d, p_i, p_j)
+        t,_ = closest_point_parameter_coplanar(curr_pos, dir_3d, p_i, p_j-p_i)
         
-        if t <= 1e-10:
+        if t <= 1e-6:
             continue
         
         intersection = curr_pos + t * dir_3d

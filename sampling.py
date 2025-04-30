@@ -29,7 +29,7 @@ def uniform_sampling(mesh: Mesh, n_points: int, tensor=False) -> List[MeshPoint]
 
     Returns
     -------
-    np.ndarray
+    List[MeshPoint]
         The sampled points.
     """
     weights = np.zeros(len(mesh.triangles))
