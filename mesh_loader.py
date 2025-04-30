@@ -22,7 +22,7 @@ def create_tetrahedron():
         [0, 1, 3],  # Face 1: Side triangle
         [1, 2, 3],  # Face 2: Side triangle
         [0, 2, 3]   # Face 3: Side triangle
-    ],dtype=int)
+    ],dtype=np.int32)
 
     compute_adjacencies(mesh)
     compute_vertex_normals(mesh)
@@ -39,7 +39,7 @@ def load_mesh_from_obj(filename):
             if line.startswith('v '):
                 # Vertex position
                 parts = line.split()
-                pos = np.array([float(parts[1]), float(parts[2]), float(parts[3])])
+                pos = [float(parts[1]), float(parts[2]), float(parts[3])]
                 mesh.positions.append(pos)
             elif line.startswith('f '):
                 # Face
@@ -51,8 +51,8 @@ def load_mesh_from_obj(filename):
                 mesh.triangles.append([v1, v2, v3])
     
     # Convert lists to numpy arrays
-    mesh.positions = np.array(mesh.positions)
-    mesh.triangles = np.array(mesh.triangles)
+    mesh.positions = np.array(mesh.positions, dtype=np.float32)
+    mesh.triangles = np.array(mesh.triangles, dtype=np.int32)
     
     # Compute adjacencies
     compute_adjacencies(mesh)

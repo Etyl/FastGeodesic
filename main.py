@@ -9,14 +9,19 @@ from sampling import uniform_sampling
 
 
 def main():
-    # mesh = create_tetrahedron()
-    mesh = load_mesh_from_obj("./data/cat_head.obj")
+    mesh = create_tetrahedron()
+    # mesh = load_mesh_from_obj("./data/cat_head.obj")
 
-    n_points = 100
+    n_points = 1
 
-    samples = uniform_sampling(mesh, n_points)
+    # samples = uniform_sampling(mesh, n_points)
+    # directions = [
+    #     np.random.normal(size=3) for _ in range(n_points)
+    # ]
+
+    samples = [MeshPoint(2, np.array([0.3, 0.3]))]
     directions = [
-        np.random.normal(size=3) for _ in range(n_points)
+        np.array([1, 0, 0])
     ]
 
     print("Tracing Geodesics...")

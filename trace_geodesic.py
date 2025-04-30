@@ -232,7 +232,7 @@ def common_edge(triangles, tri1, tri2):
     diff_verts = list(verts1-common_verts), list(verts2-common_verts)
     
     if len(common_verts) != 2:
-        return np.array([-1, -1])
+        return np.array([-1, -1]), []
     
     return np.array(list(common_verts)), diff_verts
 
