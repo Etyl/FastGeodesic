@@ -26,8 +26,8 @@ def diff_straighest_geodesic(mesh: Mesh, start: MeshPoint, dir: torch.tensor) ->
     """
     start_dir = dir.detach().numpy()
     start_normal = get_triangle_normal(mesh, start.face)
-    
-    path: GeodesicPath = straightest_geodesic(mesh, start, start_dir)
+
+    path: GeodesicPath = straightest_geodesic(mesh, start.detach(), start_dir)
 
     start_dir = start_dir / np.linalg.norm(start_dir)
 
@@ -43,18 +43,19 @@ def diff_straighest_geodesic(mesh: Mesh, start: MeshPoint, dir: torch.tensor) ->
     start_M = np.array([start_dir, start_normal, start_cross])
     end_M = np.array([end_dir, end_normal, end_cross])
 
-    # rortation matrix from basis to basis
+    # rotation matrix from basis to basis
     R = end_M @ start_M.T
 
-    target_end = R@(start.interpolate(mesh)+dir.detach().numpy())
-    T = end_point.interpolate(mesh) - target_end
-
     R = torch.tensor(R, dtype=torch.float32)
-    T = torch.tensor(T, dtype=torch.float32)
     fixed_start = start.interpolate(mesh, tensor=True).detach()
     start_point = start.interpolate(mesh, tensor=True)
 
-    return path, R @ (project_to_plane(start_point-fixed_start+dir, start_normal)+fixed_start) + T    
+    target_end = R @ (start.interpolate(mesh,tensor=True).detach()+project_to_plane(dir.detach(),torch.tensor(start_normal)))
+    T = end_point.interpolate(mesh,tensor=True).detach() - target_end
+
+    tensor_point = R @ (project_to_plane(start_point-fixed_start+dir, torch.tensor(start_normal))+fixed_start) + T
+
+    return path, tensor_point   
 
 
 if __name__ == "__main__":
@@ -62,5 +63,4 @@ if __name__ == "__main__":
     start = MeshPoint(0, np.array([0.3, 0.2]))
     dir = torch.tensor([1.0, 1.0, 1.0], dtype=torch.float32)
     path,end_point = diff_straighest_geodesic(mesh, start, dir)
-    print(end_point.grad_fn())
     visualize_mesh_and_path(mesh, [path])

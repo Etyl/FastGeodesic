@@ -35,3 +35,8 @@ class MeshPoint:
         pos = (1 - uv[0] - uv[1]) * p0 + uv[0] * p1 + uv[1] * p2
         return pos
     
+    def detach(self):    
+        if self.tensor:
+            return MeshPoint(self.face, self.uv.detach())
+        else:
+            return MeshPoint(self.face, self.uv.copy())

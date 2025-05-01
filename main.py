@@ -12,7 +12,7 @@ def main():
     # mesh = create_tetrahedron()
     mesh = load_mesh_from_obj("./data/cat_head.obj")
 
-    n_points = 100
+    n_points = 10
 
     samples = uniform_sampling(mesh, n_points)
     directions = [

@@ -67,7 +67,6 @@ def visualize_mesh_and_path(mesh:Mesh, paths:List[GeodesicPath], arrow_scale=0.2
     # 1. Plot the mesh
     faces = []
     colors = []
-    alpha_values = []
     
     # Different colors for each face
     face_colors = [

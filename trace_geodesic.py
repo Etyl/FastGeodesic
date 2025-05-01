@@ -5,7 +5,9 @@ from mesh import Mesh, MeshPoint
 
 # TODO: add docstrings to all functions
 # TODO: add type hints to all functions
-# TODO: gobal epsilons for numerical stability
+# TODO: fix when start is on edge or vertex
+
+EPS = 1e-6
 
 class GeodesicPath:
     def __init__(self):
@@ -52,25 +54,24 @@ def tri_bary_coords(p0, p1, p2, p):
     d21 = dot(v2, v1)
     
     denom = d00 * d11 - d01 * d01
-    if abs(denom) < 1e-10:
+    if abs(denom) < EPS:
         return np.array([1.0, 0.0, 0.0])
     
     v = (d11 * d20 - d01 * d21) / denom
     w = (d00 * d21 - d01 * d20) / denom
     u = 1.0 - v - w
-    
+  
     return np.array([u, v, w])
 
 def point_is_edge(point: MeshPoint):
     """Check if a mesh point is on an edge and return the edge index."""
     uv = point.uv
-    eps = 1e-5
     
-    if abs(uv[0]) < eps:
+    if abs(uv[0]) < EPS:
         return True, 2
-    if abs(uv[1]) < eps:
+    if abs(uv[1]) < EPS:
         return True, 0
-    if abs(1 - uv[0] - uv[1]) < eps:
+    if abs(1 - uv[0] - uv[1]) < EPS:
         return True, 1
     
     return False, -1
@@ -78,39 +79,36 @@ def point_is_edge(point: MeshPoint):
 def point_is_vert(point: MeshPoint):
     """Check if a mesh point is on a vertex and return the vertex index."""
     uv = point.uv
-    eps = 1e-5
     
-    if abs(uv[0]) < eps and abs(uv[1]) < eps:
+    if abs(uv[0]) < EPS and abs(uv[1]) < EPS:
         return True, 0
-    if abs(uv[0] - 1.0) < eps and abs(uv[1]) < eps:
+    if abs(uv[0] - 1.0) < EPS and abs(uv[1]) < EPS:
         return True, 1
-    if abs(uv[0]) < eps and abs(uv[1] - 1.0) < eps:
+    if abs(uv[0]) < EPS and abs(uv[1] - 1.0) < EPS:
         return True, 2
     
     return False, -1
 
 def bary_is_edge(bary):
     """Check if barycentric coordinates are on an edge and return the edge index."""
-    eps = 1e-5
     
-    if abs(bary[0]) < eps:
+    if abs(bary[0]) < EPS:
         return True, 1
-    if abs(bary[1]) < eps:
+    if abs(bary[1]) < EPS:
         return True, 2
-    if abs(bary[2]) < eps:
+    if abs(bary[2]) < EPS:
         return True, 0
     
     return False, -1
 
 def bary_is_vert(bary):
     """Check if barycentric coordinates are on a vertex and return the vertex index."""
-    eps = 1e-5
     
-    if abs(bary[0] - 1.0) < eps:
+    if abs(bary[0] - 1.0) < EPS:
         return True, 0
-    if abs(bary[1] - 1.0) < eps:
+    if abs(bary[1] - 1.0) < EPS:
         return True, 1
-    if abs(bary[2] - 1.0) < eps:
+    if abs(bary[2] - 1.0) < EPS:
         return True, 2
     
     return False, -1
@@ -142,7 +140,7 @@ def closest_point_parameter_coplanar(P1, d1, P2, d2):
 
     denominator = a * c - b * b
 
-    if abs(denominator) < 1e-6:
+    if abs(denominator) < EPS:
         return -1,-1
 
     # Solve for parameters
@@ -150,8 +148,6 @@ def closest_point_parameter_coplanar(P1, d1, P2, d2):
     t2 = (a * e - b * d) / denominator
 
     return t1,t2
-
-
 
 
 def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_pos, next_bary,max_len):
@@ -180,13 +176,13 @@ def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_p
         edge_dir = p_j - p_i
         normal = cross(dir_3d, edge_dir)
         
-        if length(normal) < 1e-10:
+        if length(normal) < EPS:
             continue
         
         # Find the intersection parameter t
         t,_ = closest_point_parameter_coplanar(curr_pos, dir_3d, p_i, p_j-p_i)
         
-        if t <= 1e-6:
+        if t <= EPS:
             continue
         
         intersection = curr_pos + t * dir_3d
@@ -227,6 +223,7 @@ def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_p
     next_bary[i] = 1 - edge_param
     next_bary[j] = edge_param
 
+
 def common_edge(triangles, tri1, tri2):
     """Find the common edge between two triangles."""
     # Get the vertices of both triangles
@@ -250,7 +247,7 @@ def u_coordinate(edge, pos, positions):
     edge_dir = v1 - v0
     edge_len = length(edge_dir)
     
-    if edge_len < 1e-10:
+    if edge_len < EPS:
         return 0.0
     
     return dot(pos - v0, edge_dir) / edge_len
@@ -264,7 +261,7 @@ def find_in_vector(vec, val):
 
 def check_point(point:MeshPoint):
     """Check if a mesh point is valid."""
-    eps = 1e-5
+    eps = EPS
     assert point.uv[0] >= -eps and point.uv[1] >= -eps
     assert point.uv[0] + point.uv[1] <= 1 + 2*eps
 
@@ -275,7 +272,7 @@ def signed_angle(A, B, N):
     N = N / length(N)
     A = A - dot(A,N)*N
     B = B - dot(B,N)*N
-    if length(A) < 1e-10 or length(B) < 1e-10:
+    if length(A) < EPS or length(B) < EPS:
         return 0.0
     A = A / length(A)
     B = B / length(B)
@@ -391,7 +388,7 @@ def compute_parallel_transport_vertex(mesh:Mesh, curr_pos, curr_tri, vertex_id, 
             n
         ))
 
-        if angle+tri_angle>half_angle:
+        if angle+tri_angle >= half_angle-EPS:
             angle_diff = half_angle-angle # TODO angle orientation
             axis = n
             edge = mesh.positions[v1]-mesh.positions[vertex_id]
@@ -449,7 +446,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
         # Project the direction onto the triangle plane
         proj_dir = project_vec(dir, tid_normal)
         
-        if length(proj_dir) < 1e-10:
+        if length(proj_dir) < EPS:
             # Direction is perpendicular to the triangle, cannot proceed
             break
         
