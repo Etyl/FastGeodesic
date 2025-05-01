@@ -10,7 +10,7 @@ from trace_geodesic import GeodesicPath
 def plot_path(path: GeodesicPath, mesh: Mesh, ax, arrow_scale=0.2):
     path_points = np.array(path.path)
     ax.plot(path_points[:, 0], path_points[:, 1], path_points[:, 2], 'o-', 
-            color='magenta', linewidth=3, markersize=8)
+            color='magenta', linewidth=2, markersize=5)
     
     # 4. Plot direction vectors at each path point
     if hasattr(path, 'dirs') and len(path.dirs) > 0:
@@ -47,8 +47,8 @@ def plot_path(path: GeodesicPath, mesh: Mesh, ax, arrow_scale=0.2):
     start_pos = path.start.interpolate(mesh)
     end_pos = path.end.interpolate(mesh)
     
-    ax.scatter([start_pos[0]], [start_pos[1]], [start_pos[2]], color='lime', s=100, marker='*')
-    ax.scatter([end_pos[0]], [end_pos[1]], [end_pos[2]], color='red', s=100, marker='X')
+    ax.scatter([start_pos[0]], [start_pos[1]], [start_pos[2]], color='lime', s=200, marker='*')
+    ax.scatter([end_pos[0]], [end_pos[1]], [end_pos[2]], color='red', s=200, marker='X')
     
 
 

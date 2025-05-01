@@ -3,6 +3,25 @@ import numpy as np
 from trace_geodesic import triangle_normal, normalize
 from mesh import Mesh
 
+def create_triangle():
+    """Create a simple triangle mesh."""
+    mesh = Mesh()
+    
+    # Define vertices
+    mesh.positions = np.array([
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+    ],dtype=np.float32)
+    
+    # Define triangles (faces)
+    mesh.triangles = np.array([[0, 1, 2]], dtype=np.int32)
+
+    compute_adjacencies(mesh)
+    compute_vertex_normals(mesh)
+    compute_vertex_to_triangle_map(mesh)
+    
+    return mesh
 
 def create_tetrahedron():
     """Create a tetrahedron mesh."""

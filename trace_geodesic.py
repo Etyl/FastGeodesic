@@ -418,6 +418,17 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
     Returns:
         A geodesic path
     """
+    # Get the triangle vertices
+    p0 = mesh.positions[mesh.triangles[start.face][0]]
+    p1 = mesh.positions[mesh.triangles[start.face][1]]
+    p2 = mesh.positions[mesh.triangles[start.face][2]]
+    
+    # Compute the triangle normal
+    tid_normal = triangle_normal(p0, p1, p2)
+    
+    # Project the direction onto the triangle plane
+    dir = project_vec(dir, tid_normal)
+
     geodesic = GeodesicPath()
     geodesic.start = start
     geodesic.path.append(start.interpolate(mesh))
@@ -434,7 +445,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
     len_path = 0.0
     path_len = length(dir)
     
-    while len_path < path_len:        
+    while len_path < path_len:
         # Get the triangle vertices
         p0 = mesh.positions[mesh.triangles[curr_tri][0]]
         p1 = mesh.positions[mesh.triangles[curr_tri][1]]
@@ -444,8 +455,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
         tid_normal = triangle_normal(p0, p1, p2)
         
         # Project the direction onto the triangle plane
-        proj_dir = project_vec(dir, tid_normal)
-        
+        proj_dir = project_vec(dir, tid_normal)            
         if length(proj_dir) < EPS:
             # Direction is perpendicular to the triangle, cannot proceed
             break
@@ -492,9 +502,16 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
             # Find the adjacent triangle across this edge
             edge_local_idx = edge_idx
             adj_tri = mesh.adjacencies[curr_tri][edge_local_idx]
+
+            # Compute barycentric coordinates in the adjacent triangle
+            p0_adj = mesh.positions[mesh.triangles[adj_tri][0]]
+            p1_adj = mesh.positions[mesh.triangles[adj_tri][1]]
+            p2_adj = mesh.positions[mesh.triangles[adj_tri][2]]
             
             if adj_tri == -1:
-                # No adjacent triangle (boundary edge)
+                next_bary = tri_bary_coords(p0_adj, p1_adj, p2_adj, next_pos)
+                curr_point = MeshPoint(adj_tri, bary_to_uv(next_bary))
+                geodesic.dirs.append(dir) # TODO same for vertex
                 break
             
             # Get the common edge vertices
@@ -507,11 +524,6 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
             # Transport the direction to the adjacent triangle
             dir = compute_parallel_transport(mesh, curr_pos, curr_tri, next_pos, adj_tri, proj_dir)
             geodesic.dirs.append(dir)
-            
-            # Compute barycentric coordinates in the adjacent triangle
-            p0_adj = mesh.positions[mesh.triangles[adj_tri][0]]
-            p1_adj = mesh.positions[mesh.triangles[adj_tri][1]]
-            p2_adj = mesh.positions[mesh.triangles[adj_tri][2]]
             
             next_bary = tri_bary_coords(p0_adj, p1_adj, p2_adj, next_pos)
             

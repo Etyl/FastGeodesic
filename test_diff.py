@@ -1,12 +1,15 @@
 import torch
 import numpy as np
+from torchviz import make_dot
 
 from diff_geodesic import diff_straighest_geodesic, get_triangle_normal
-from mesh_loader import load_mesh_from_obj
+from mesh_loader import load_mesh_from_obj, create_triangle
 from mesh import MeshPoint, Mesh
 from ui import visualize_mesh_and_path
 from trace_geodesic import GeodesicPath
 
+# TODO try to use smaller meshes for testing
+# TODO add unit tests (use pot pourri)
 
 def tri_bary_coords(p0, p1, p2, p):
     """Compute barycentric coordinates of p in the triangle (p0, p1, p2)."""
@@ -55,28 +58,33 @@ class DirNN(torch.nn.Module):
         dir = self.layer(x)
         geodesic, new_point = diff_straighest_geodesic(self.mesh, mesh_point, dir)
         return new_point, point_to_uv(self.mesh, new_point, geodesic.end.face)
-    
+
+
 def score(x) -> torch.Tensor:
     return 1+x[1]
 
 
 def main():
+    # mesh = create_triangle()
     mesh = load_mesh_from_obj("./data/cat_head.obj")
 
     dir_nn = DirNN(mesh)
 
-    optimizer = torch.optim.SGD(dir_nn.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(dir_nn.parameters(), lr=0.01)
     geodesic = GeodesicPath()
     geodesic.start = MeshPoint(face=0, uv=torch.tensor([0.2, 0.2], dtype=torch.float32))
     geodesic.path = [geodesic.start.interpolate(mesh)]
 
-    for i in range(1000):
+    for i in range(200):
         mesh_point = MeshPoint(face=0, uv=torch.tensor([0.2, 0.2], dtype=torch.float32))
         point = mesh_point.interpolate(mesh)
         for _ in range(1):
             point, mesh_point = dir_nn(mesh_point.detach())
 
             score_value = score(point)
+            # if score_value.item() > 1.8:
+            #     dot = make_dot(score_value)
+            #     dot.render("grad_graph", format="png")
             
             # backpropagate the score to the point
             optimizer.zero_grad()
