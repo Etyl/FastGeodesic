@@ -156,8 +156,7 @@ def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_p
     p0 = positions[triangles[curr_tri][0]]
     p1 = positions[triangles[curr_tri][1]]
     p2 = positions[triangles[curr_tri][2]]
-    n = triangle_normal(p0, p1, p2)
-    
+        
     # Get the current position
     curr_pos = curr_bary[0] * p0 + curr_bary[1] * p1 + curr_bary[2] * p2
     
@@ -312,10 +311,7 @@ def compute_parallel_transport_vertex(mesh:Mesh, curr_pos, curr_tri, vertex_id, 
                 vertices[idx] = v
                 idx += 1
 
-        p0 = mesh.positions[mesh.triangles[tri_id][0]]
-        p1 = mesh.positions[mesh.triangles[tri_id][1]]
-        p2 = mesh.positions[mesh.triangles[tri_id][2]]
-        n = triangle_normal(p0,p1,p2)
+        n = mesh.triangle_normals[tri_id]
 
         angle = signed_angle(
             mesh.positions[vertices[0]]-mesh.positions[vertex_id],
@@ -334,11 +330,8 @@ def compute_parallel_transport_vertex(mesh:Mesh, curr_pos, curr_tri, vertex_id, 
         if v!=vertex_id:
             v1 = v
             break
-    p0 = mesh.positions[mesh.triangles[tri_id][0]]
-    p1 = mesh.positions[mesh.triangles[tri_id][1]]
-    p2 = mesh.positions[mesh.triangles[tri_id][2]]
-    n = triangle_normal(p0,p1,p2)
 
+    n = mesh.triangle_normals[tri_id]
     angle += abs(signed_angle(
         dir_3d,
         mesh.positions[v1]-mesh.positions[vertex_id],
@@ -397,13 +390,8 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
     Returns:
         A geodesic path
     """
-    # Get the triangle vertices
-    p0 = mesh.positions[mesh.triangles[start.face][0]]
-    p1 = mesh.positions[mesh.triangles[start.face][1]]
-    p2 = mesh.positions[mesh.triangles[start.face][2]]
-    
-    # Compute the triangle normal
-    tid_normal = triangle_normal(p0, p1, p2)
+    # Get the triangle normal
+    tid_normal = mesh.triangle_normals[start.face]
     
     # Project the direction onto the triangle plane
     dir = project_vec(dir, tid_normal)
@@ -425,13 +413,8 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
     path_len = length(dir)
     
     while len_path < path_len:
-        # Get the triangle vertices
-        p0 = mesh.positions[mesh.triangles[curr_tri][0]]
-        p1 = mesh.positions[mesh.triangles[curr_tri][1]]
-        p2 = mesh.positions[mesh.triangles[curr_tri][2]]
-        
-        # Compute the triangle normal
-        tid_normal = triangle_normal(p0, p1, p2)
+        # Get the triangle normal
+        tid_normal = mesh.triangle_normals[curr_tri]
         
         # Project the direction onto the triangle plane
         proj_dir = project_vec(dir, tid_normal)            

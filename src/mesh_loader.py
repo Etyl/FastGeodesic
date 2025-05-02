@@ -1,6 +1,6 @@
 import numpy as np
 
-from trace_geodesic import triangle_normal, normalize
+from trace_geodesic import normalize
 from mesh import Mesh
 
 def create_triangle():
@@ -18,7 +18,7 @@ def create_triangle():
     mesh.triangles = np.array([[0, 1, 2]], dtype=np.int32)
 
     compute_adjacencies(mesh)
-    compute_vertex_normals(mesh)
+    compute_triangle_normals(mesh)
     compute_vertex_to_triangle_map(mesh)
     
     return mesh
@@ -44,7 +44,7 @@ def create_tetrahedron():
     ],dtype=np.int32)
 
     compute_adjacencies(mesh)
-    compute_vertex_normals(mesh)
+    compute_triangle_normals(mesh)
     compute_vertex_to_triangle_map(mesh)
     
     return mesh
@@ -73,13 +73,8 @@ def load_mesh_from_obj(filename):
     mesh.positions = np.array(mesh.positions, dtype=np.float32)
     mesh.triangles = np.array(mesh.triangles, dtype=np.int32)
     
-    # Compute adjacencies
     compute_adjacencies(mesh)
-    
-    # Compute vertex normals
-    compute_vertex_normals(mesh)
-    
-    # Compute vertex to triangle map
+    compute_triangle_normals(mesh)
     compute_vertex_to_triangle_map(mesh)
     
     return mesh
@@ -114,28 +109,19 @@ def compute_adjacencies(mesh):
                 # New edge
                 edge_to_triangle[edge] = (tri_idx, local_edge_idx)
 
-def compute_vertex_normals(mesh):
+
+def compute_triangle_normals(mesh:Mesh):
     """Compute vertex normals as the average of adjacent face normals."""
-    num_vertices = len(mesh.positions)
-    mesh.normals = np.zeros((num_vertices, 3))
+    mesh.triangle_normals = np.zeros((len(mesh.triangles), 3))
     
     # For each triangle
-    for tri in mesh.triangles:
+    for i,tri in enumerate(mesh.triangles):
         p0 = mesh.positions[tri[0]]
         p1 = mesh.positions[tri[1]]
         p2 = mesh.positions[tri[2]]
         
         # Compute triangle normal
-        normal = triangle_normal(p0, p1, p2)
-        
-        # Add to each vertex normal
-        mesh.normals[tri[0]] += normal
-        mesh.normals[tri[1]] += normal
-        mesh.normals[tri[2]] += normal
-    
-    # Normalize all vertex normals
-    for i in range(num_vertices):
-        mesh.normals[i] = normalize(mesh.normals[i])
+        mesh.triangle_normals[i] = normalize(np.cross(p1 - p0, p2 - p0))
 
 def compute_vertex_to_triangle_map(mesh):
     """Create a mapping from vertices to triangles that contain them."""

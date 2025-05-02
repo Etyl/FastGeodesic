@@ -66,7 +66,7 @@ def score(x) -> torch.Tensor:
 
 def main():
     # mesh = create_triangle()
-    mesh = load_mesh_from_obj("./data/cat_head.obj")
+    mesh = load_mesh_from_obj("../data/cat_head.obj") # TODO use abs path
 
     dir_nn = DirNN(mesh)
 

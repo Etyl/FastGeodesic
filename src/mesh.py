@@ -6,7 +6,7 @@ class Mesh:
         self.positions = []
         self.triangles = []
         self.adjacencies = []
-        self.normals = []
+        self.triangle_normals = []
         self.v2t = []
 
 class MeshPoint:

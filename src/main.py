@@ -2,7 +2,6 @@ import numpy as np
 import time
 
 from trace_geodesic import straightest_geodesic
-from mesh import MeshPoint
 from mesh_loader import create_tetrahedron, load_mesh_from_obj
 from ui import visualize_mesh_and_path
 from sampling import uniform_sampling
@@ -10,7 +9,7 @@ from sampling import uniform_sampling
 
 def main():
     # mesh = create_tetrahedron()
-    mesh = load_mesh_from_obj("./data/cat_head.obj")
+    mesh = load_mesh_from_obj("../data/cat_head.obj")
 
     n_points = 10
 
