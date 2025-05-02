@@ -3,10 +3,10 @@ import numpy as np
 from torchviz import make_dot
 
 from diff_geodesic import diff_straighest_geodesic, get_triangle_normal
-from mesh_loader import load_mesh_from_obj, create_triangle
-from mesh import MeshPoint, Mesh
+from dataloader.mesh_loader import load_mesh_from_obj, create_triangle
+from geometry.mesh import MeshPoint, Mesh
 from ui import visualize_mesh_and_path
-from trace_geodesic import GeodesicPath
+from geometry.trace_geodesic import GeodesicPath
 
 # TODO try to use smaller meshes for testing
 # TODO add unit tests (use pot pourri)

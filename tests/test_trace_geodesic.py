@@ -1,6 +1,6 @@
 import numpy as np
 
-from trace_geodesic import *
+from geometry.trace_geodesic import *
 
 
 def test_triangle_normal_basic():

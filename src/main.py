@@ -1,17 +1,17 @@
 import numpy as np
 import time
 
-from trace_geodesic import straightest_geodesic
-from mesh_loader import create_tetrahedron, load_mesh_from_obj
+from geometry.trace_geodesic import straightest_geodesic
+from dataloader.mesh_loader import create_tetrahedron, load_mesh_from_obj
 from ui import visualize_mesh_and_path
-from sampling import uniform_sampling
+from geometry.sampling import uniform_sampling
 
 
 def main():
     # mesh = create_tetrahedron()
     mesh = load_mesh_from_obj("../data/cat_head.obj")
 
-    n_points = 10
+    n_points = 1
 
     samples = uniform_sampling(mesh, n_points)
     directions = [

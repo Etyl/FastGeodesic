@@ -2,9 +2,9 @@ import numpy as np
 import torch
 from typing import Tuple, List
 
-from trace_geodesic import straightest_geodesic, GeodesicPath, triangle_normal
-from mesh import MeshPoint, Mesh
-from mesh_loader import load_mesh_from_obj
+from geometry.trace_geodesic import straightest_geodesic, GeodesicPath, triangle_normal
+from geometry.mesh import MeshPoint, Mesh
+from dataloader.mesh_loader import load_mesh_from_obj
 from ui import visualize_mesh_and_path
 
 

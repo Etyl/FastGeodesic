@@ -2,18 +2,8 @@ import numpy as np
 import torch
 from typing import List
 
-from mesh import Mesh, MeshPoint
-
-
-def area_triangle(p0,p1,p2):
-    v1 = p1 - p0
-    v2 = p2 - p0
-    
-    # Calculate the cross product of the two vectors
-    cross_product = np.cross(v1, v2)
-    
-    # The magnitude of the cross product is twice the area of the triangle
-    return np.linalg.norm(cross_product) / 2
+from geometry.mesh import Mesh, MeshPoint
+from geometry.utils import area_triangle
 
 
 def uniform_sampling(mesh: Mesh, n_points: int, tensor=False) -> List[MeshPoint]:
