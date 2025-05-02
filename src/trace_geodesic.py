@@ -239,31 +239,10 @@ def common_edge(triangles, tri1, tri2):
     
     return np.array(list(common_verts)), diff_verts
 
-def u_coordinate(edge, pos, positions):
-    """Compute the u coordinate of a position on an edge."""
-    v0 = positions[edge[0]]
-    v1 = positions[edge[1]]
-    
-    edge_dir = v1 - v0
-    edge_len = length(edge_dir)
-    
-    if edge_len < EPS:
-        return 0.0
-    
-    return dot(pos - v0, edge_dir) / edge_len
-
-def find_in_vector(vec, val):
-    """Find the index of a value in a vector."""
-    for i, v in enumerate(vec):
-        if v == val:
-            return i
-    return -1
-
 def check_point(point:MeshPoint):
     """Check if a mesh point is valid."""
-    eps = EPS
-    assert point.uv[0] >= -eps and point.uv[1] >= -eps
-    assert point.uv[0] + point.uv[1] <= 1 + 2*eps
+    assert point.uv[0] >= -EPS and point.uv[1] >= -EPS
+    assert point.uv[0] + point.uv[1] <= 1 + 2*EPS
 
 def signed_angle(A, B, N):
     """
