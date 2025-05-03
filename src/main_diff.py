@@ -2,13 +2,17 @@ import torch
 import numpy as np
 from torchviz import make_dot
 import os
+from typing import List, Tuple
+import tqdm
 
-from diff_geodesic import diff_straighest_geodesic, get_triangle_normal
+from diff_geodesic import batch_diff_straighest_geodesic, get_triangle_normal
 from dataloader.mesh_loader import load_mesh_from_obj, create_triangle, create_tetrahedron
 from geometry.mesh import MeshPoint, Mesh
-from ui import visualize_mesh_and_path
+from ui import visualize_mesh_and_path, visualize_mesh_and_points
 from geometry.trace_geodesic import GeodesicPath
 from constants import DATA_DIR
+from geometry.sampling import uniform_sampling
+
 
 # TODO add unit tests (use pot pourri)
 
@@ -53,49 +57,59 @@ def point_to_uv(mesh: Mesh, point: torch.Tensor, face:int) -> MeshPoint:
     return MeshPoint(face, bary_to_uv(bary))
 
 class DirNN(torch.nn.Module):
-    def __init__(self, mesh: Mesh):
+    def __init__(self, mesh: Mesh, hidden_dim=128, cpus=1):
         super(DirNN, self).__init__()
+        self.cpus = cpus
         self.mesh = mesh
-        self.layer = torch.nn.Linear(6,3)
+        self.mlp = torch.nn.Sequential(
+            torch.nn.Linear(6,hidden_dim),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden_dim,hidden_dim),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden_dim,3),
+        ).type(torch.float64)
 
-    def forward(self, mesh_point:MeshPoint):
-        normal = torch.tensor(get_triangle_normal(self.mesh, mesh_point.face),dtype=torch.float64)
-        x = torch.cat([mesh_point.interpolate(self.mesh, tensor=True), normal])
-        dir = self.layer(x)
-        geodesic, new_point = diff_straighest_geodesic(self.mesh, mesh_point, dir)
-        return new_point, point_to_uv(self.mesh, new_point, geodesic.end.face)
+    def forward(self, mesh_points:List[MeshPoint]):
+        mesh_points = [mesh_point.detach() for mesh_point in mesh_points]
+        normals = torch.tensor(np.array([get_triangle_normal(self.mesh, mesh_point.face) for mesh_point in mesh_points]),dtype=torch.float64)
+        points = torch.tensor(np.array([mesh_point.interpolate(self.mesh) for mesh_point in mesh_points]),dtype=torch.float64)
+        x = torch.cat([points, normals], dim=1)
+        dirs = self.mlp(x)
+        geodesics, new_points = batch_diff_straighest_geodesic(self.mesh, mesh_points, dirs, cpus=self.cpus)
+        new_mesh_points = [point_to_uv(self.mesh, new_point, geodesic.end.face) for geodesic, new_point in zip(geodesics, new_points)]
+        return new_points, new_mesh_points
 
 
 def score(x) -> torch.Tensor:
-    return 1+x[1]
+    return torch.mean(1+x[:,1])
 
 
-def main():
+def main(n_points=100, iterations=50, cpus=None):
     # mesh = create_tetrahedron()
     mesh = load_mesh_from_obj(os.path.join(DATA_DIR, "cat_head.obj"))
-    dir_nn = DirNN(mesh)
+    dir_nn = DirNN(mesh, cpus=cpus)
 
     optimizer = torch.optim.Adam(dir_nn.parameters(), lr=0.01)
-    geodesic = GeodesicPath()
-    geodesic.start = MeshPoint(face=0, uv=torch.tensor([0.2, 0.2], dtype=torch.float64))
-    geodesic.path = [geodesic.start.interpolate(mesh)]
 
-    for i in range(200):
-        mesh_point = MeshPoint(face=0, uv=torch.tensor([0.2, 0.2], dtype=torch.float64))
-        point = mesh_point.interpolate(mesh)
-        point, mesh_point = dir_nn(mesh_point.detach())
+    start_mesh_points = uniform_sampling(mesh, n_points=n_points, tensor=True)
 
-        score_value = score(point)
+    progress_bar = tqdm.tqdm(range(iterations), desc="Training")
+
+    for i in progress_bar:
+        points, mesh_points = dir_nn(start_mesh_points)
+
+        score_value = score(points)
         
         # backpropagate the score to the point
         optimizer.zero_grad()
         (-score_value).backward()
         optimizer.step()
-        geodesic.path.append(point.detach().numpy())
- 
-        print(f"Iteration {i}: Score = {score_value.item()}")        
-    geodesic.end = mesh_point
-    visualize_mesh_and_path(mesh, [geodesic])
+
+        progress_bar.set_postfix({"Score": score_value.item()})
+     
+    start_points = np.array([mesh_point.interpolate(mesh) for mesh_point in start_mesh_points])
+    end_points = points.detach().numpy()
+    visualize_mesh_and_points(mesh, start_points, end_points)
 
 if __name__ == "__main__":
     set_seed(102)

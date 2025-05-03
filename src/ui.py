@@ -120,3 +120,66 @@ def visualize_mesh_and_path(mesh:Mesh, paths:List[GeodesicPath], arrow_scale=0.2
     
     plt.tight_layout()
     plt.show()
+
+
+def visualize_mesh_and_points(mesh: Mesh, starts: np.ndarray, ends: np.ndarray):
+    """Visualize the mesh and start and end points in 3D."""
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    # 1. Plot the mesh
+    faces = []
+    colors = []
+    
+    # Different colors for each face
+    face_colors = [
+        (0.8, 0.1, 0.1, 0.5),  # Red
+        (0.1, 0.8, 0.1, 0.5),  # Green
+        (0.1, 0.1, 0.8, 0.5),  # Blue
+        (0.8, 0.8, 0.1, 0.5)   # Yellow
+    ]
+    
+    for i, triangle in enumerate(mesh.triangles):
+        # Get vertices
+        vertices = [mesh.positions[idx] for idx in triangle]
+        faces.append(vertices)
+        colors.append((*face_colors[i % len(face_colors)][:3], 0.3))  # More transparent for other faces
+    
+    # Create 3D polygons
+    poly = Poly3DCollection(faces, linewidths=0.3, edgecolors='black', alpha=0.5)
+    ax.add_collection3d(poly)
+    
+    # 2. Plot vertices
+    vertices = np.array(mesh.positions)
+    ax.scatter(vertices[:, 0], vertices[:, 1], vertices[:, 2], color='black', s=10, label='Vertices')
+    
+    # Plot start and end points
+    ax.scatter(starts[:, 0], starts[:, 1], starts[:, 2], color='lime', s=200, marker='*', label='Start Points')
+    ax.scatter(ends[:, 0], ends[:, 1], ends[:, 2], color='red', s=200, marker='X', label='End Points')
+    
+    # Labels and title
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('Mesh with Start and End Points')
+    
+    # Add legend
+    ax.legend()
+    
+    # Set aspect ratio to be equal
+    max_range = np.max([
+        np.max(vertices[:, 0]) - np.min(vertices[:, 0]),
+        np.max(vertices[:, 1]) - np.min(vertices[:, 1]),
+        np.max(vertices[:, 2]) - np.min(vertices[:, 2])
+    ])
+
+    mid_x = (np.max(vertices[:, 0]) + np.min(vertices[:, 0])) * 0.5
+    mid_y = (np.max(vertices[:, 1]) + np.min(vertices[:, 1])) * 0.5
+    mid_z = (np.max(vertices[:, 2]) + np.min(vertices[:, 2])) * 0.5
+
+    ax.set_xlim(mid_x - max_range * 0.6, mid_x + max_range * 0.6)
+    ax.set_ylim(mid_y - max_range * 0.6, mid_y + max_range * 0.6)
+    ax.set_zlim(mid_z - max_range * 0.6, mid_z + max_range * 0.6)
+
+    plt.tight_layout()
+    plt.show()

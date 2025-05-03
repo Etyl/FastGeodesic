@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 from typing import Tuple, List
+from multiprocessing import Pool, cpu_count
+import copy
 
 from geometry.trace_geodesic import straightest_geodesic, GeodesicPath, triangle_normal
 from geometry.mesh import MeshPoint, Mesh
@@ -18,12 +20,11 @@ def get_triangle_normal(mesh: Mesh, face_id: int) -> np.ndarray:
 def project_to_plane(dir, normal) -> torch.Tensor:
     return dir - normal * torch.dot(dir, normal)
 
-def diff_straighest_geodesic(mesh: Mesh, start: MeshPoint, dir: torch.tensor) -> Tuple[GeodesicPath, torch.Tensor]: 
-    """
-    Compute the geodesic path using finite differences for gradient computation.
-    """
-    path: GeodesicPath = straightest_geodesic(mesh, start.detach(), dir.detach().numpy())
 
+def get_tensor_from_path(mesh: Mesh, path: GeodesicPath, start: MeshPoint, dir: torch.Tensor) -> torch.Tensor:
+    """
+    Convert a GeodesicPath endpoint to a tensor representation.
+    """
     start_dir = path.dirs[0]
     start_dir = start_dir / np.linalg.norm(start_dir)
     start_normal = path.normals[0]
@@ -52,5 +53,63 @@ def diff_straighest_geodesic(mesh: Mesh, start: MeshPoint, dir: torch.tensor) ->
 
     tensor_point = (project_to_plane(start_point-fixed_start+dir, torch.tensor(start_normal))+fixed_start) @ R + T
 
+    return tensor_point
+
+
+def diff_straighest_geodesic(mesh: Mesh, start: MeshPoint, dir: torch.Tensor) -> Tuple[GeodesicPath, torch.Tensor]: 
+    """
+    Compute the geodesic path using finite differences for gradient computation.
+    """
+    path: GeodesicPath = straightest_geodesic(mesh, start.detach(), dir.detach().numpy())
+    tensor_point = get_tensor_from_path(mesh, path, start, dir)
+    
     return path, tensor_point   
 
+
+def batch_straightest_geodesic(mesh: Mesh, starts: List[MeshPoint], dirs: List[torch.tensor]) -> Tuple[List[GeodesicPath], List[torch.Tensor]]:
+    """
+    Compute the geodesic path using finite differences for gradient computation.
+    """
+    paths = []
+
+    for k, (start, dir) in enumerate(zip(starts, dirs)):
+        path = straightest_geodesic(mesh, start, dir)
+        paths.append(path)
+
+    return paths
+
+def batch_diff_straighest_geodesic(mesh: Mesh, starts: List[MeshPoint], dirs: List[torch.tensor], cpus = None) -> Tuple[List[GeodesicPath], List[torch.Tensor]]: 
+    """
+    Compute the geodesic path using finite differences for gradient computation, uses multiprocessing.
+    """
+
+    if cpus is None:
+        paths = []
+        for start, dir in zip(starts, dirs):
+            path = straightest_geodesic(mesh, start.detach(), dir.detach().numpy())
+            paths.append(path)
+    else: 
+        cpus = min(cpus, len(starts))
+
+        # Split the start and dir lists into chunks for multiprocessing
+        chunk_size = len(starts) // cpus
+        dir_chunks = [
+            [dir.detach().numpy() for dir in dirs[i:min(len(dirs),i+chunk_size)]] 
+            for i in range(0, len(dirs), chunk_size)
+        ]
+        start_chunks = [
+            [start.detach() for start in starts[i:min(len(starts),i+chunk_size)]] 
+            for i in range(0, len(starts), chunk_size)
+        ]
+
+        # Create a pool of workers
+        with Pool(cpus) as pool:
+            total_paths = pool.starmap(batch_straightest_geodesic, [(mesh, start_chunk, dir_chunk) for start_chunk, dir_chunk in zip(start_chunks, dir_chunks)])
+        paths = [item for sublist in total_paths for item in sublist]
+    
+    tensor_points = torch.zeros(len(paths), 3, dtype=torch.float64)
+    for k, (path, dir, start) in enumerate(zip(paths, dirs, starts)):
+        tensor_points[k] = get_tensor_from_path(mesh, path, start, dir)
+
+    return paths, tensor_points
+    
