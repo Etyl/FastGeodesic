@@ -4,8 +4,6 @@ from typing import List,Optional,Tuple
 from geometry.mesh import Mesh, MeshPoint
 from geometry.utils import dot, cross, length, normalize, triangle_normal
 
-# TODO: add docstrings to all functions
-# TODO: fix when start is on edge or vertex
 
 EPS = 1e-6
 
@@ -37,6 +35,8 @@ def tri_bary_coords(p0, p1, p2, p) -> np.ndarray:
     v = (d11 * d20 - d01 * d21) / denom
     w = (d00 * d21 - d01 * d20) / denom
     u = 1.0 - v - w
+
+    assert u > -EPS and v > -EPS and w > -EPS and u + v + w < 1+3*EPS, f"Invalid barycentric coordinates: {u}, {v}, {w}"
   
     return np.array([u, v, w])
 
@@ -159,7 +159,7 @@ def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_p
         # Find the intersection parameter t
         t,_ = closest_point_parameter_coplanar(curr_pos, dir_3d, p_i, p_j-p_i)
         
-        if t <= EPS:
+        if t < -EPS:
             continue
         
         intersection = curr_pos + t * dir_3d
@@ -167,24 +167,28 @@ def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_p
         # Check if the intersection is on the edge
         edge_param = dot(intersection - p_i, edge_dir) / dot(edge_dir, edge_dir)
         
-        if edge_param < 0 or edge_param > 1:
+        if edge_param < EPS or edge_param > 1-EPS:
             continue
         
         # Valid intersection
         intersections.append((t, intersection, edge_idx, edge_param))
     
     if not intersections:
-        # No intersection, use the direction
-        next_pos[:] = curr_pos + dir_3d
-        next_bary[:] = tri_bary_coords(p0, p1, p2, next_pos)
-        # TODO stop geodesic
+        # No intersection
         return
     
     # Sort intersections by distance
     intersections.sort(key=lambda x: x[0])
-    
-    # Get the closest intersection
-    _, intersection, edge_idx, edge_param = intersections[0]
+
+    idx = 0
+    if len(intersections) > 1:
+        if intersections[0][0] < EPS:
+            # If both intersections are very close, use the second one
+            idx = 1
+        else:
+            idx = 0
+
+    _, intersection, edge_idx, edge_param = intersections[idx]
 
     if length(curr_pos-intersection)>max_len:
         # No intersection, use the direction
@@ -466,7 +470,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             if adj_tri == -1:
                 next_bary = tri_bary_coords(p0_adj, p1_adj, p2_adj, next_pos)
                 curr_point = MeshPoint(adj_tri, bary_to_uv(next_bary))
-                geodesic.dirs.append(dir) # TODO same for vertex
+                geodesic.dirs.append(dir)
                 break
             
             # Get the common edge vertices

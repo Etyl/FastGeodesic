@@ -97,7 +97,6 @@ def main():
     geodesic.end = mesh_point
     visualize_mesh_and_path(mesh, [geodesic])
 
-# TODO fix: SEED 102 points outsite mesh 
 if __name__ == "__main__":
-    set_seed(92)
+    set_seed(102)
     main()
