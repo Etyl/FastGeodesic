@@ -167,7 +167,7 @@ def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_p
         # Check if the intersection is on the edge
         edge_param = dot(intersection - p_i, edge_dir) / dot(edge_dir, edge_dir)
         
-        if edge_param < EPS or edge_param > 1-EPS:
+        if edge_param < -EPS or edge_param > 1-EPS:
             continue
         
         # Valid intersection
@@ -406,7 +406,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
     curr_tri = start.face
     next_tri = -1
     
-    while len_path < path_len:
+    while len_path < path_len-EPS:
         # Get the triangle normal
         tid_normal = mesh.triangle_normals[curr_tri]
         
@@ -435,7 +435,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             v_idx = mesh.triangles[curr_tri][vert_idx]
             
             # Transport the direction to the next triangle
-            dir, current_normal = compute_parallel_transport_vertex(mesh, curr_tri, v_idx, proj_dir, current_normal)
+            dir, next_tri, current_normal = compute_parallel_transport_vertex(mesh, curr_tri, v_idx, proj_dir, current_normal)
             geodesic.dirs.append(dir)
             geodesic.normals.append(current_normal)
 
@@ -443,9 +443,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             p0_adj = mesh.positions[mesh.triangles[next_tri][0]]
             p1_adj = mesh.positions[mesh.triangles[next_tri][1]]
             p2_adj = mesh.positions[mesh.triangles[next_tri][2]]
-            
-            next_bary = tri_bary_coords(p0_adj, p1_adj, p2_adj, next_pos)
-            
+                        
             # Update current state
             curr_tri = next_tri
             curr_pos = next_pos.copy()
@@ -478,7 +476,6 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             
             if len(e)==0:
                 # No common edge found
-                next_bary = tri_bary_coords(p0_adj, p1_adj, p2_adj, next_pos)                
                 curr_point = MeshPoint(adj_tri, bary_to_uv(next_bary))
                 break
             
@@ -486,9 +483,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             dir, current_normal = compute_parallel_transport(mesh, curr_tri, adj_tri, proj_dir, current_normal)
             geodesic.dirs.append(dir)
             geodesic.normals.append(current_normal)
-            
-            next_bary = tri_bary_coords(p0_adj, p1_adj, p2_adj, next_pos)
-            
+                        
             # Update current state
             curr_tri = adj_tri
             curr_pos = next_pos.copy()

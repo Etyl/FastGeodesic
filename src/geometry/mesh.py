@@ -50,7 +50,7 @@ class Mesh:
 
     def compute_triangle_normals(self):
         """Compute vertex normals as the average of adjacent face normals."""
-        self.triangle_normals = np.zeros((len(self.triangles), 3), dtype=np.float32)
+        self.triangle_normals = np.zeros((len(self.triangles), 3), dtype=np.float64)
         
         # For each triangle
         for i,tri in enumerate(self.triangles):
@@ -90,9 +90,9 @@ class MeshPoint:
         p2 = mesh.positions[mesh.triangles[face][2]]
 
         if tensor:
-            p0 = torch.tensor(mesh.positions[mesh.triangles[face][0]],dtype=torch.float32)
-            p1 = torch.tensor(mesh.positions[mesh.triangles[face][1]],dtype=torch.float32)
-            p2 = torch.tensor(mesh.positions[mesh.triangles[face][2]],dtype=torch.float32)
+            p0 = torch.tensor(mesh.positions[mesh.triangles[face][0]],dtype=torch.float64)
+            p1 = torch.tensor(mesh.positions[mesh.triangles[face][1]],dtype=torch.float64)
+            p2 = torch.tensor(mesh.positions[mesh.triangles[face][2]],dtype=torch.float64)
         elif self.tensor:
             uv = uv.detach().numpy()
         

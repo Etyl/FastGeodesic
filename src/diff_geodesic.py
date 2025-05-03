@@ -43,7 +43,7 @@ def diff_straighest_geodesic(mesh: Mesh, start: MeshPoint, dir: torch.tensor) ->
     # rotation matrix from basis to basis
     R = start_M.T @ end_M
 
-    R = torch.tensor(R, dtype=torch.float32)
+    R = torch.tensor(R, dtype=torch.float64)
     fixed_start = start.interpolate(mesh, tensor=True).detach()
     start_point = start.interpolate(mesh, tensor=True)
 

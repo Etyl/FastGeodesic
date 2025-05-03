@@ -36,9 +36,9 @@ def uniform_sampling(mesh: Mesh, n_points: int, tensor=False) -> List[MeshPoint]
     for k in range(n_points):
         triangle_id = np.random.choice(len(mesh.triangles), p=weights)
         if tensor:
-            barycentric_coords = torch.zeros(2, dtype=torch.float32)
+            barycentric_coords = torch.zeros(2, dtype=torch.float64)
         else:
-            barycentric_coords = np.zeros(2, dtype=np.float32)
+            barycentric_coords = np.zeros(2, dtype=np.float64)
         barycentric_coords[0] = np.random.random()
         barycentric_coords[1] = (1-barycentric_coords[0])*np.random.random()
         samples.append(MeshPoint(triangle_id, barycentric_coords))

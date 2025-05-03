@@ -59,7 +59,7 @@ class DirNN(torch.nn.Module):
         self.layer = torch.nn.Linear(6,3)
 
     def forward(self, mesh_point:MeshPoint):
-        normal = torch.tensor(get_triangle_normal(self.mesh, mesh_point.face),dtype=torch.float32)
+        normal = torch.tensor(get_triangle_normal(self.mesh, mesh_point.face),dtype=torch.float64)
         x = torch.cat([mesh_point.interpolate(self.mesh, tensor=True), normal])
         dir = self.layer(x)
         geodesic, new_point = diff_straighest_geodesic(self.mesh, mesh_point, dir)
@@ -77,11 +77,11 @@ def main():
 
     optimizer = torch.optim.Adam(dir_nn.parameters(), lr=0.01)
     geodesic = GeodesicPath()
-    geodesic.start = MeshPoint(face=0, uv=torch.tensor([0.2, 0.2], dtype=torch.float32))
+    geodesic.start = MeshPoint(face=0, uv=torch.tensor([0.2, 0.2], dtype=torch.float64))
     geodesic.path = [geodesic.start.interpolate(mesh)]
 
     for i in range(200):
-        mesh_point = MeshPoint(face=0, uv=torch.tensor([0.2, 0.2], dtype=torch.float32))
+        mesh_point = MeshPoint(face=0, uv=torch.tensor([0.2, 0.2], dtype=torch.float64))
         point = mesh_point.interpolate(mesh)
         point, mesh_point = dir_nn(mesh_point.detach())
 

@@ -12,7 +12,7 @@ def create_triangle() -> Mesh:
         [0.0, 0.0, 0.0],
         [1.0, 0.0, 0.0],
         [0.0, 1.0, 0.0],
-    ],dtype=np.float32)
+    ],dtype=np.float64)
     
     # Define triangles (faces)
     mesh.triangles = np.array([[0, 1, 2]], dtype=np.int32)
@@ -31,7 +31,7 @@ def create_tetrahedron() -> Mesh:
         [1.0, 0.0, 0.0],  # Vertex 1
         [0.0, 1.0, 0.0],  # Vertex 2
         [0.0, 0.0, 1.0]   # Vertex 3
-    ],dtype=np.float32)
+    ],dtype=np.float64)
     
     # Define triangles (faces)
     mesh.triangles = np.array([
@@ -66,7 +66,7 @@ def load_mesh_from_obj(filename:str) -> Mesh:
                 mesh.triangles.append([v1, v2, v3])
     
     # Convert lists to numpy arrays
-    mesh.positions = np.array(mesh.positions, dtype=np.float32)
+    mesh.positions = np.array(mesh.positions, dtype=np.float64)
     mesh.triangles = np.array(mesh.triangles, dtype=np.int32)
     
     mesh.build()
