@@ -1,11 +1,7 @@
 import numpy as np
 
 from geometry.mesh import Mesh
-from dataloader.utils import (
-    compute_adjacencies, 
-    compute_triangle_normals, 
-    compute_vertex_to_triangle_map
-)
+
 
 def create_triangle() -> Mesh:
     """Create a simple triangle mesh."""
@@ -21,9 +17,7 @@ def create_triangle() -> Mesh:
     # Define triangles (faces)
     mesh.triangles = np.array([[0, 1, 2]], dtype=np.int32)
 
-    compute_adjacencies(mesh)
-    compute_triangle_normals(mesh)
-    compute_vertex_to_triangle_map(mesh)
+    mesh.build()
     
     return mesh
 
@@ -47,9 +41,7 @@ def create_tetrahedron() -> Mesh:
         [0, 2, 3]   # Face 3: Side triangle
     ],dtype=np.int32)
 
-    compute_adjacencies(mesh)
-    compute_triangle_normals(mesh)
-    compute_vertex_to_triangle_map(mesh)
+    mesh.build()
     
     return mesh
 
@@ -77,8 +69,6 @@ def load_mesh_from_obj(filename:str) -> Mesh:
     mesh.positions = np.array(mesh.positions, dtype=np.float32)
     mesh.triangles = np.array(mesh.triangles, dtype=np.int32)
     
-    compute_adjacencies(mesh)
-    compute_triangle_normals(mesh)
-    compute_vertex_to_triangle_map(mesh)
+    mesh.build()
     
     return mesh

@@ -10,7 +10,6 @@ from ui import visualize_mesh_and_path
 from geometry.trace_geodesic import GeodesicPath
 from constants import DATA_DIR
 
-# TODO try to use smaller meshes for testing
 # TODO add unit tests (use pot pourri)
 
 def set_seed(seed: int):
@@ -72,8 +71,8 @@ def score(x) -> torch.Tensor:
 
 
 def main():
-    mesh = create_tetrahedron()
-    # mesh = load_mesh_from_obj(os.path.join(DATA_DIR, "cat_head.obj"))
+    # mesh = create_tetrahedron()
+    mesh = load_mesh_from_obj(os.path.join(DATA_DIR, "cat_head.obj"))
     dir_nn = DirNN(mesh)
 
     optimizer = torch.optim.Adam(dir_nn.parameters(), lr=0.01)
@@ -98,7 +97,7 @@ def main():
     geodesic.end = mesh_point
     visualize_mesh_and_path(mesh, [geodesic])
 
-
+# TODO fix: SEED 102 points outsite mesh 
 if __name__ == "__main__":
     set_seed(102)
     main()
