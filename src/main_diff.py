@@ -99,5 +99,5 @@ def main():
 
 # TODO fix: SEED 102 points outsite mesh 
 if __name__ == "__main__":
-    set_seed(102)
+    set_seed(92)
     main()

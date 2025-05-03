@@ -1,13 +1,9 @@
 import numpy as np
 import torch
 from typing import Tuple, List
-import os
 
 from geometry.trace_geodesic import straightest_geodesic, GeodesicPath, triangle_normal
 from geometry.mesh import MeshPoint, Mesh
-from dataloader.mesh_loader import load_mesh_from_obj, create_tetrahedron
-from ui import visualize_mesh_and_path
-from constants import DATA_DIR
 
 
 def get_triangle_normal(mesh: Mesh, face_id: int) -> np.ndarray:
