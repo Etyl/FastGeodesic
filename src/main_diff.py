@@ -1,12 +1,14 @@
 import torch
 import numpy as np
 from torchviz import make_dot
+import os
 
 from diff_geodesic import diff_straighest_geodesic, get_triangle_normal
 from dataloader.mesh_loader import load_mesh_from_obj, create_triangle
 from geometry.mesh import MeshPoint, Mesh
 from ui import visualize_mesh_and_path
 from geometry.trace_geodesic import GeodesicPath
+from constants import DATA_DIR
 
 # TODO try to use smaller meshes for testing
 # TODO add unit tests (use pot pourri)
@@ -66,8 +68,7 @@ def score(x) -> torch.Tensor:
 
 def main():
     # mesh = create_triangle()
-    mesh = load_mesh_from_obj("../data/cat_head.obj") # TODO use abs path
-
+    mesh = load_mesh_from_obj(os.path.join(DATA_DIR, "cat_head.obj"))
     dir_nn = DirNN(mesh)
 
     optimizer = torch.optim.Adam(dir_nn.parameters(), lr=0.01)

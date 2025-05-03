@@ -7,7 +7,6 @@ from geometry.utils import dot, cross, length, normalize, triangle_normal
 # TODO: add docstrings to all functions
 # TODO: add type hints to all functions
 # TODO: fix when start is on edge or vertex
-# TODO: fix endpoint not same as last path point when on edge
 
 EPS = 1e-6
 
@@ -356,7 +355,7 @@ def bary_to_uv(bary):
     """Convert barycentric coordinates to UV coordinates."""
     return np.array([bary[1], bary[2]])
 
-def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
+def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> GeodesicPath:
     """
     Compute the straightest geodesic path on a mesh.
     
@@ -370,6 +369,9 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
     """
     # Get the triangle normal
     tid_normal = mesh.triangle_normals[start.face]
+
+    len_path = 0.0
+    path_len = length(dir)
     
     # Project the direction onto the triangle plane
     dir = project_vec(dir, tid_normal)
@@ -387,8 +389,6 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
     tid_normal = np.zeros(3)
     curr_tri = start.face
     next_tri = -1
-    len_path = 0.0
-    path_len = length(dir)
     
     while len_path < path_len:
         # Get the triangle normal
@@ -412,6 +412,8 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
         # Update the path
         len_path += length(next_pos - curr_pos)
         geodesic.path.append(next_pos.copy())
+        if len(geodesic.path) == 22:
+            x = 0
         
         # Determine the next triangle
         if is_vert_bary:
@@ -442,6 +444,8 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
             # Find the adjacent triangle across this edge
             edge_local_idx = edge_idx
             adj_tri = mesh.adjacencies[curr_tri][edge_local_idx]
+            if adj_tri == -1:
+                adj_tri = curr_tri
 
             # Compute barycentric coordinates in the adjacent triangle
             p0_adj = mesh.positions[mesh.triangles[adj_tri][0]]
@@ -459,6 +463,8 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray):
             
             if e[0] == -1:
                 # No common edge found
+                next_bary = tri_bary_coords(p0_adj, p1_adj, p2_adj, next_pos)                
+                curr_point = MeshPoint(adj_tri, bary_to_uv(next_bary))
                 break
             
             # Transport the direction to the adjacent triangle
