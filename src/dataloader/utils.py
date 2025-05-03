@@ -36,7 +36,7 @@ def compute_adjacencies(mesh):
 
 def compute_triangle_normals(mesh:Mesh):
     """Compute vertex normals as the average of adjacent face normals."""
-    mesh.triangle_normals = np.zeros((len(mesh.triangles), 3))
+    mesh.triangle_normals = np.zeros((len(mesh.triangles), 3), dtype=np.float32)
     
     # For each triangle
     for i,tri in enumerate(mesh.triangles):

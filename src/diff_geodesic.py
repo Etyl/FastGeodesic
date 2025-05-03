@@ -5,7 +5,7 @@ import os
 
 from geometry.trace_geodesic import straightest_geodesic, GeodesicPath, triangle_normal
 from geometry.mesh import MeshPoint, Mesh
-from dataloader.mesh_loader import load_mesh_from_obj
+from dataloader.mesh_loader import load_mesh_from_obj, create_tetrahedron
 from ui import visualize_mesh_and_path
 from constants import DATA_DIR
 
@@ -30,12 +30,12 @@ def diff_straighest_geodesic(mesh: Mesh, start: MeshPoint, dir: torch.tensor) ->
 
     start_dir = path.dirs[0]
     start_dir = start_dir / np.linalg.norm(start_dir)
-    start_normal = get_triangle_normal(mesh, start.face)
+    start_normal = path.normals[0]
 
     end_point = path.end
     end_dir = path.dirs[-1]
     end_dir = end_dir / np.linalg.norm(end_dir)
-    end_normal = get_triangle_normal(mesh, end_point.face)
+    end_normal = path.normals[-1]
 
     start_cross = np.cross(start_dir, start_normal)
     end_cross = np.cross(end_dir, end_normal)

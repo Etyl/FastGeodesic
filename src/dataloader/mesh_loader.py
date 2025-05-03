@@ -32,12 +32,12 @@ def create_tetrahedron() -> Mesh:
     mesh = Mesh()
     
     # Define vertices
-    mesh.positions = [
-        np.array([0.0, 0.0, 0.0]),  # Vertex 0
-        np.array([1.0, 0.0, 0.0]),  # Vertex 1
-        np.array([0.0, 1.0, 0.0]),  # Vertex 2
-        np.array([0.0, 0.0, 1.0])   # Vertex 3
-    ]
+    mesh.positions = np.array([
+        [0.0, 0.0, 0.0],  # Vertex 0
+        [1.0, 0.0, 0.0],  # Vertex 1
+        [0.0, 1.0, 0.0],  # Vertex 2
+        [0.0, 0.0, 1.0]   # Vertex 3
+    ],dtype=np.float32)
     
     # Define triangles (faces)
     mesh.triangles = np.array([

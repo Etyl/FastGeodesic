@@ -4,7 +4,7 @@ from torchviz import make_dot
 import os
 
 from diff_geodesic import diff_straighest_geodesic, get_triangle_normal
-from dataloader.mesh_loader import load_mesh_from_obj, create_triangle
+from dataloader.mesh_loader import load_mesh_from_obj, create_triangle, create_tetrahedron
 from geometry.mesh import MeshPoint, Mesh
 from ui import visualize_mesh_and_path
 from geometry.trace_geodesic import GeodesicPath
@@ -12,6 +12,11 @@ from constants import DATA_DIR
 
 # TODO try to use smaller meshes for testing
 # TODO add unit tests (use pot pourri)
+
+def set_seed(seed: int):
+    """Set the random seed for reproducibility."""
+    torch.manual_seed(seed)
+    np.random.seed(seed)
 
 def tri_bary_coords(p0, p1, p2, p):
     """Compute barycentric coordinates of p in the triangle (p0, p1, p2)."""
@@ -67,8 +72,8 @@ def score(x) -> torch.Tensor:
 
 
 def main():
-    # mesh = create_triangle()
-    mesh = load_mesh_from_obj(os.path.join(DATA_DIR, "cat_head.obj"))
+    mesh = create_tetrahedron()
+    # mesh = load_mesh_from_obj(os.path.join(DATA_DIR, "cat_head.obj"))
     dir_nn = DirNN(mesh)
 
     optimizer = torch.optim.Adam(dir_nn.parameters(), lr=0.01)
@@ -79,18 +84,14 @@ def main():
     for i in range(200):
         mesh_point = MeshPoint(face=0, uv=torch.tensor([0.2, 0.2], dtype=torch.float32))
         point = mesh_point.interpolate(mesh)
-        for _ in range(1):
-            point, mesh_point = dir_nn(mesh_point.detach())
+        point, mesh_point = dir_nn(mesh_point.detach())
 
-            score_value = score(point)
-            # if score_value.item() > 1.8:
-            #     dot = make_dot(score_value)
-            #     dot.render("grad_graph", format="png")
-            
-            # backpropagate the score to the point
-            optimizer.zero_grad()
-            (-score_value).backward()
-            optimizer.step()
+        score_value = score(point)
+        
+        # backpropagate the score to the point
+        optimizer.zero_grad()
+        (-score_value).backward()
+        optimizer.step()
         geodesic.path.append(point.detach().numpy())
  
         print(f"Iteration {i}: Score = {score_value.item()}")        
@@ -99,4 +100,5 @@ def main():
 
 
 if __name__ == "__main__":
+    set_seed(102)
     main()

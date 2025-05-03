@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 
+# TODO build cache from mesh class
 class Mesh:
     def __init__(self):
         self.positions = []

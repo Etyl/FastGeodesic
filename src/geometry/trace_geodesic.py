@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List,Optional
+from typing import List,Optional,Tuple
 
 from geometry.mesh import Mesh, MeshPoint
 from geometry.utils import dot, cross, length, normalize, triangle_normal
@@ -16,6 +16,7 @@ class GeodesicPath:
         self.end : Optional[MeshPoint] = None
         self.path : List[np.ndarray] = []
         self.dirs : List[np.ndarray] = []
+        self.normals : List[np.ndarray] = []
 
 
 def tri_bary_coords(p0, p1, p2, p):
@@ -66,7 +67,7 @@ def point_is_vert(point: MeshPoint):
     
     return False, -1
 
-def bary_is_edge(bary):
+def bary_is_edge(bary) -> Tuple[bool,int]:
     """Check if barycentric coordinates are on an edge and return the edge index."""
     
     if abs(bary[0]) < EPS:
@@ -78,7 +79,7 @@ def bary_is_edge(bary):
     
     return False, -1
 
-def bary_is_vert(bary):
+def bary_is_vert(bary) -> Tuple[bool,int]:
     """Check if barycentric coordinates are on a vertex and return the vertex index."""
     
     if abs(bary[0] - 1.0) < EPS:
@@ -95,7 +96,7 @@ def project_vec(v, normal):
     return v - dot(v, normal) * normal
 
 
-def closest_point_parameter_coplanar(P1, d1, P2, d2):
+def closest_point_parameter_coplanar(P1, d1, P2, d2) -> Tuple[float, float]:
     """
     Finds the closest points on two lines in 3D.
     """
@@ -238,18 +239,18 @@ def signed_angle(A, B, N):
     angle = np.arctan2(sign, dot_prod)
     return angle  # in radians
 
-def compute_parallel_transport(mesh, curr_pos, curr_tri, next_pos, next_tri, dir_3d):
+def compute_parallel_transport(mesh, curr_pos, curr_tri, next_pos, next_tri, dir_3d, curr_normal) -> Tuple[np.ndarray,np.ndarray]:
     """
     Compute the parallel transport of a vector from one triangle to another.
     """
     if curr_tri == next_tri:
-        return dir_3d
+        return dir_3d, curr_normal
     
     # Find the common edge between triangles
     common_e, other_v = common_edge(mesh.triangles, curr_tri, next_tri)
     
     if common_e[0] == -1:
-        return dir_3d  # No common edge found
+        return dir_3d, curr_normal  # No common edge found
     
     # Get the normals of both triangles
     p0 = mesh.positions[common_e[0]]
@@ -271,10 +272,14 @@ def compute_parallel_transport(mesh, curr_pos, curr_tri, next_pos, next_tri, dir
     angle = signed_angle(n1,n2,axis)
 
     # Rodrigues' rotation formula
-    return dir_3d * np.cos(angle) + cross(axis, dir_3d) * np.sin(angle) + axis * dot(axis, dir_3d) * (1 - np.cos(angle))
+    dir = dir_3d * np.cos(angle) + cross(axis, dir_3d) * np.sin(angle) + axis * dot(axis, dir_3d) * (1 - np.cos(angle))
+    
+    normal_sign = dot(n1, curr_normal)
+    normal = normal_sign * (-n2)
+    return dir, normal
 
 
-def compute_parallel_transport_vertex(mesh:Mesh, curr_pos, curr_tri, vertex_id, dir_3d):
+def compute_parallel_transport_vertex(mesh:Mesh, curr_pos, curr_tri, vertex_id, dir_3d, curr_normal) -> Tuple[np.ndarray,int,np.ndarray]:
     """
     Compute the parallel transport of a vector at a vertex.
     """
@@ -307,8 +312,15 @@ def compute_parallel_transport_vertex(mesh:Mesh, curr_pos, curr_tri, vertex_id, 
         if v!=vertex_id:
             v1 = v
             break
-
-    n = mesh.triangle_normals[tri_id]
+    v2 = (set(mesh.triangles[curr_tri])-{v1,vertex_id}).pop()
+    p0 = mesh.positions[vertex_id]
+    p1 = mesh.positions[v1]
+    p2 = mesh.positions[v2]
+    n = triangle_normal(p0,p1,p2)
+    if dot(n, curr_normal) > 0:
+        normal_sign = 1
+    else:
+        normal_sign = -1
     angle += abs(signed_angle(
         dir_3d,
         mesh.positions[v1]-mesh.positions[vertex_id],
@@ -342,13 +354,13 @@ def compute_parallel_transport_vertex(mesh:Mesh, curr_pos, curr_tri, vertex_id, 
             axis = n
             edge = mesh.positions[v1]-mesh.positions[vertex_id]
             new_dir = edge * np.cos(angle_diff) + cross(axis, edge) * np.sin(angle_diff) + axis * dot(axis, edge) * (1 - np.cos(angle_diff))
-            return new_dir, next_tri
+            return new_dir, next_tri, normal_sign*n
         
         curr_tri = next_tri
         v1 = v2
         angle += tri_angle
 
-    return np.zeros(3),0
+    return np.zeros(3),0, curr_normal
 
 
 def bary_to_uv(bary):
@@ -368,18 +380,19 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
         A geodesic path
     """
     # Get the triangle normal
-    tid_normal = mesh.triangle_normals[start.face]
+    current_normal = mesh.triangle_normals[start.face]
 
     len_path = 0.0
     path_len = length(dir)
     
     # Project the direction onto the triangle plane
-    dir = project_vec(dir, tid_normal)
+    dir = project_vec(dir, current_normal)
 
     geodesic = GeodesicPath()
     geodesic.start = start
     geodesic.path.append(start.interpolate(mesh))
     geodesic.dirs.append(normalize(dir))
+    geodesic.normals.append(current_normal)
     
     next_bary = np.zeros(3)
     curr_bary = np.array([1 - start.uv[0] - start.uv[1], start.uv[0], start.uv[1]])
@@ -412,8 +425,6 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
         # Update the path
         len_path += length(next_pos - curr_pos)
         geodesic.path.append(next_pos.copy())
-        if len(geodesic.path) == 22:
-            x = 0
         
         # Determine the next triangle
         if is_vert_bary:
@@ -421,8 +432,9 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             v_idx = mesh.triangles[curr_tri][vert_idx]
             
             # Transport the direction to the next triangle
-            dir, next_tri = compute_parallel_transport_vertex(mesh, curr_pos, curr_tri, v_idx, proj_dir)
+            dir, current_normal = compute_parallel_transport_vertex(mesh, curr_pos, curr_tri, v_idx, proj_dir, current_normal)
             geodesic.dirs.append(dir)
+            geodesic.normals.append(current_normal)
 
             # Compute barycentric coordinates in the adjacent triangle
             p0_adj = mesh.positions[mesh.triangles[next_tri][0]]
@@ -468,8 +480,9 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
                 break
             
             # Transport the direction to the adjacent triangle
-            dir = compute_parallel_transport(mesh, curr_pos, curr_tri, next_pos, adj_tri, proj_dir)
+            dir, current_normal = compute_parallel_transport(mesh, curr_pos, curr_tri, next_pos, adj_tri, proj_dir, current_normal)
             geodesic.dirs.append(dir)
+            geodesic.normals.append(current_normal)
             
             next_bary = tri_bary_coords(p0_adj, p1_adj, p2_adj, next_pos)
             
@@ -493,6 +506,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             
             # Continue in the same direction
             geodesic.dirs.append(proj_dir)
+            geodesic.normals.append(current_normal)
     
     # Set the end point
     geodesic.end = curr_point
