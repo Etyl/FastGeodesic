@@ -48,6 +48,8 @@ def create_tetrahedron() -> Mesh:
 def load_mesh_from_obj(filename:str) -> Mesh:
     """Load a mesh from an OBJ file."""
     mesh = Mesh()
+    positions = []
+    triangles = []
     
     with open(filename, 'r') as f:
         for line in f:
@@ -55,7 +57,7 @@ def load_mesh_from_obj(filename:str) -> Mesh:
                 # Vertex position
                 parts = line.split()
                 pos = [float(parts[1]), float(parts[2]), float(parts[3])]
-                mesh.positions.append(pos)
+                positions.append(pos)
             elif line.startswith('f '):
                 # Face
                 parts = line.split()
@@ -63,11 +65,11 @@ def load_mesh_from_obj(filename:str) -> Mesh:
                 v1 = int(parts[1].split('/')[0]) - 1
                 v2 = int(parts[2].split('/')[0]) - 1
                 v3 = int(parts[3].split('/')[0]) - 1
-                mesh.triangles.append([v1, v2, v3])
+                triangles.append([v1, v2, v3])
     
     # Convert lists to numpy arrays
-    mesh.positions = np.array(mesh.positions, dtype=np.float64)
-    mesh.triangles = np.array(mesh.triangles, dtype=np.int32)
+    mesh.positions = np.array(positions, dtype=np.float64)
+    mesh.triangles = np.array(triangles, dtype=np.int32)
     
     mesh.build()
     

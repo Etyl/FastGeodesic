@@ -3,9 +3,8 @@ from typing import List,Optional,Tuple
 
 from geometry.mesh import Mesh, MeshPoint
 from geometry.utils import dot, cross, length, normalize, triangle_normal
+from constants import EPS
 
-
-EPS = 1e-6
 
 class GeodesicPath:
     def __init__(self):
@@ -100,43 +99,29 @@ def closest_point_parameter_coplanar(P1, d1, P2, d2) -> Tuple[float, float]:
     Finds the closest points on two lines in 3D.
     Returns the parameters t1 and t2 for the closest points on the lines.
     """
-    # Ensure numpy arrays
-    P1, d1 = np.array(P1, dtype=float), np.array(d1, dtype=float)
-    P2, d2 = np.array(P2, dtype=float), np.array(d2, dtype=float)
+    A = np.array([d1, -d2])
+    M = A @ A.T
+    det = M[0, 0] * M[1, 1] - M[0, 1] * M[1, 0]
+    if abs(det) < EPS:
+        return -1, -1
+    
+    M_inv = np.array([
+        [M[1, 1], -M[0, 1]], 
+        [-M[1, 0], M[0, 0]]
+    ]) / det
 
-    # Normalize direction vectors
-    d1_norm = d1 / np.linalg.norm(d1)
-    d2_norm = d2 / np.linalg.norm(d2)
+    A_inv = A.T @ M_inv
 
-    # Compute intermediate values
-    r = P1 - P2
-    a = np.dot(d1_norm, d1_norm)
-    b = np.dot(d1_norm, d2_norm)
-    c = np.dot(d2_norm, d2_norm)
-    d = np.dot(d1_norm, r)
-    e = np.dot(d2_norm, r)
+    res = (P2 - P1) @ A_inv
 
-    denominator = a * c - b * b
-
-    if abs(denominator) < EPS:
-        return -1,-1
-
-    # Solve for parameters
-    t1 = (b * e - c * d) / denominator
-    t2 = (a * e - b * d) / denominator
-
-    return t1,t2
+    return res[0], res[1]
 
 
-def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_pos, next_bary,max_len):
+# TODO clean this up
+def trace_in_triangles(mesh: Mesh, dir_3d:np.ndarray, curr_point:MeshPoint, curr_tri:int, max_len:float) -> Tuple[np.ndarray,np.ndarray]:
     """Trace a straight line within triangles."""
-    # Get the triangle vertices
-    p0 = positions[triangles[curr_tri][0]]
-    p1 = positions[triangles[curr_tri][1]]
-    p2 = positions[triangles[curr_tri][2]]
-        
     # Get the current position
-    curr_pos = curr_bary[0] * p0 + curr_bary[1] * p1 + curr_bary[2] * p2
+    curr_pos = curr_point.interpolate(mesh)
     
     # Find the intersection with the triangle edges
     intersections = []
@@ -144,11 +129,11 @@ def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_p
     # Check each edge
     edges = [(0, 1), (1, 2), (2, 0)]
     for edge_idx, (i, j) in enumerate(edges):
-        vi = triangles[curr_tri][i]
-        vj = triangles[curr_tri][j]
+        vi = mesh.triangles[curr_tri][i]
+        vj = mesh.triangles[curr_tri][j]
         
-        p_i = positions[vi]
-        p_j = positions[vj]
+        p_i = mesh.positions[vi]
+        p_j = mesh.positions[vj]
         
         edge_dir = p_j - p_i
         normal = cross(dir_3d, edge_dir)
@@ -157,15 +142,12 @@ def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_p
             continue
         
         # Find the intersection parameter t
-        t,_ = closest_point_parameter_coplanar(curr_pos, dir_3d, p_i, p_j-p_i)
+        t,edge_param = closest_point_parameter_coplanar(curr_pos, dir_3d, p_i, edge_dir)
         
         if t < -EPS:
             continue
         
         intersection = curr_pos + t * dir_3d
-        
-        # Check if the intersection is on the edge
-        edge_param = dot(intersection - p_i, edge_dir) / dot(edge_dir, edge_dir)
         
         if edge_param < -EPS or edge_param > 1-EPS:
             continue
@@ -175,7 +157,7 @@ def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_p
     
     if not intersections:
         # No intersection
-        return
+        return curr_point, curr_point.get_barycentric_coords(mesh)
     
     # Sort intersections by distance
     intersections.sort(key=lambda x: x[0])
@@ -192,17 +174,22 @@ def trace_in_triangles(positions, triangles, dir_3d, curr_bary, curr_tri, next_p
 
     if length(curr_pos-intersection)>max_len:
         # No intersection, use the direction
-        next_pos[:] = curr_pos + max_len*dir_3d
-        next_bary[:] = tri_bary_coords(p0, p1, p2, next_pos)
-        return
+        next_pos = curr_pos + max_len*dir_3d
+        p0 = mesh.positions[mesh.triangles[curr_tri][0]]
+        p1 = mesh.positions[mesh.triangles[curr_tri][1]]
+        p2 = mesh.positions[mesh.triangles[curr_tri][2]]
+        next_bary = tri_bary_coords(p0, p1, p2, next_pos)
+        return next_pos, next_bary
 
-    next_pos[:] = intersection
+    next_pos = intersection
 
     # Compute barycentric coordinates at the intersection
     i, j = edges[edge_idx]
-    next_bary[:] = np.zeros(3)
+    next_bary = np.zeros(3)
     next_bary[i] = 1 - edge_param
     next_bary[j] = edge_param
+
+    return next_pos, next_bary
 
 
 def common_edge(triangles, tri1, tri2) -> Tuple[List[int], Optional[int], Optional[int]]:
@@ -385,11 +372,13 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
     # Get the triangle normal
     current_normal = mesh.triangle_normals[start.face]
 
-    len_path = 0.0
-    path_len = length(dir)
+    
     
     # Project the direction onto the triangle plane
     dir = project_vec(dir, current_normal)
+
+    len_path = 0.0
+    path_len = length(dir) # TODO change ?
 
     geodesic = GeodesicPath()
     geodesic.start = start
@@ -419,7 +408,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
         proj_dir = normalize(proj_dir)
         
         # Trace the ray in the current triangle
-        trace_in_triangles(mesh.positions, mesh.triangles, proj_dir, curr_bary, curr_tri, next_pos, next_bary, path_len-len_path)
+        next_pos, next_bary = trace_in_triangles(mesh, proj_dir, curr_point, curr_tri, path_len-len_path)
         
         # Check if the point is on an edge or vertex
         is_edge_bary, edge_idx = bary_is_edge(next_bary)
@@ -443,6 +432,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             p0_adj = mesh.positions[mesh.triangles[next_tri][0]]
             p1_adj = mesh.positions[mesh.triangles[next_tri][1]]
             p2_adj = mesh.positions[mesh.triangles[next_tri][2]]
+            next_bary = tri_bary_coords(p0_adj, p1_adj, p2_adj, next_pos)
                         
             # Update current state
             curr_tri = next_tri
@@ -464,9 +454,9 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             p0_adj = mesh.positions[mesh.triangles[adj_tri][0]]
             p1_adj = mesh.positions[mesh.triangles[adj_tri][1]]
             p2_adj = mesh.positions[mesh.triangles[adj_tri][2]]
+            next_bary = tri_bary_coords(p0_adj, p1_adj, p2_adj, next_pos)
             
             if adj_tri == -1:
-                next_bary = tri_bary_coords(p0_adj, p1_adj, p2_adj, next_pos)
                 curr_point = MeshPoint(adj_tri, bary_to_uv(next_bary))
                 geodesic.dirs.append(dir)
                 break
@@ -503,7 +493,8 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             curr_point = MeshPoint(curr_tri, bary_to_uv(curr_bary))
             
             # Continue in the same direction
-            geodesic.dirs.append(proj_dir)
+            dir = proj_dir
+            geodesic.dirs.append(dir)
             geodesic.normals.append(current_normal)
     
     # Set the end point

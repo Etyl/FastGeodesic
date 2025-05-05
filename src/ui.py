@@ -44,11 +44,13 @@ def plot_path(path: GeodesicPath, mesh: Mesh, ax, arrow_scale=0.2):
                 )
     
     # 5. Add start and end points with different markers
-    start_pos = path.start.interpolate(mesh)
-    end_pos = path.end.interpolate(mesh)
+    if path.start:
+        start_pos = path.start.interpolate(mesh)
+        ax.scatter([start_pos[0]], [start_pos[1]], [start_pos[2]], color='lime', s=200, marker='*')
     
-    ax.scatter([start_pos[0]], [start_pos[1]], [start_pos[2]], color='lime', s=200, marker='*')
-    ax.scatter([end_pos[0]], [end_pos[1]], [end_pos[2]], color='red', s=200, marker='X')
+    if path.end:
+        end_pos = path.end.interpolate(mesh)  
+        ax.scatter([end_pos[0]], [end_pos[1]], [end_pos[2]], color='red', s=200, marker='X')
     
 
 
@@ -119,7 +121,6 @@ def visualize_mesh_and_path(mesh:Mesh, paths:List[GeodesicPath], arrow_scale=0.2
     ax.set_zlim(mid_z - max_range * 0.6, mid_z + max_range * 0.6)
     
     plt.tight_layout()
-    plt.show()
 
 
 def visualize_mesh_and_points(mesh: Mesh, points: np.ndarray, desc:str="Points"):
