@@ -1,15 +1,14 @@
 import torch
 import numpy as np
-from torchviz import make_dot
 import os
-from typing import List, Tuple
+from typing import List
 import tqdm
+import matplotlib.pyplot as plt
 
-from diff_geodesic import batch_diff_straighest_geodesic, get_triangle_normal
+from geometry.diff_geodesic import batch_diff_straighest_geodesic, get_triangle_normal
 from dataloader.mesh_loader import load_mesh_from_obj, create_triangle, create_tetrahedron
 from geometry.mesh import MeshPoint, Mesh
-from ui import visualize_mesh_and_path, visualize_mesh_and_points
-from geometry.trace_geodesic import GeodesicPath
+from ui import plot_loss, visualize_mesh_and_path, visualize_mesh_and_points
 from constants import DATA_DIR
 from geometry.sampling import uniform_sampling
 
@@ -81,22 +80,26 @@ class DirNN(torch.nn.Module):
 
 
 def score(x) -> torch.Tensor:
-    return torch.mean(1+x[:,1])
+    return torch.mean(x[:,1])
 
 
-def main(n_points=100, iterations=50, cpus=None):
+def main(n_points=100, epochs=50, iterations=3, cpus=None):
     # mesh = create_tetrahedron()
     mesh = load_mesh_from_obj(os.path.join(DATA_DIR, "cat_head.obj"))
     dir_nn = DirNN(mesh, cpus=cpus)
 
     optimizer = torch.optim.Adam(dir_nn.parameters(), lr=0.01)
-
+    
     start_mesh_points = uniform_sampling(mesh, n_points=n_points, tensor=True)
+    total_loss = []
 
-    progress_bar = tqdm.tqdm(range(iterations), desc="Training")
+    progress_bar = tqdm.tqdm(range(epochs), desc="Training")
 
-    for i in progress_bar:
-        points, mesh_points = dir_nn(start_mesh_points)
+    for _ in progress_bar:
+        mesh_points = [mesh_point.detach() for mesh_point in start_mesh_points]
+        
+        for _ in range(iterations):
+            points, mesh_points = dir_nn(mesh_points)
 
         score_value = score(points)
         
@@ -106,10 +109,23 @@ def main(n_points=100, iterations=50, cpus=None):
         optimizer.step()
 
         progress_bar.set_postfix({"Score": score_value.item()})
+        total_loss.append(-score_value.item())
      
-    start_points = np.array([mesh_point.interpolate(mesh) for mesh_point in start_mesh_points])
-    end_points = points.detach().numpy()
-    visualize_mesh_and_points(mesh, start_points, end_points)
+    # Visualize the mesh and points
+    with torch.no_grad():
+        mesh_points = [mesh_point.detach() for mesh_point in start_mesh_points]
+            
+        for k in range(iterations):
+            points = np.array([mesh_point.interpolate(mesh) for mesh_point in mesh_points])
+            visualize_mesh_and_points(mesh, points, f"Points iteration {k}")
+            points, mesh_points = dir_nn(mesh_points)
+             
+        end_points = points.detach().numpy()
+        visualize_mesh_and_points(mesh, end_points, "End Points")
+    
+    plot_loss(total_loss)
+
+    plt.show()
 
 if __name__ == "__main__":
     set_seed(102)

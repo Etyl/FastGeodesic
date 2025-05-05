@@ -122,7 +122,7 @@ def visualize_mesh_and_path(mesh:Mesh, paths:List[GeodesicPath], arrow_scale=0.2
     plt.show()
 
 
-def visualize_mesh_and_points(mesh: Mesh, starts: np.ndarray, ends: np.ndarray):
+def visualize_mesh_and_points(mesh: Mesh, points: np.ndarray, desc:str="Points"):
     """Visualize the mesh and start and end points in 3D."""
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111, projection='3d')
@@ -154,14 +154,13 @@ def visualize_mesh_and_points(mesh: Mesh, starts: np.ndarray, ends: np.ndarray):
     ax.scatter(vertices[:, 0], vertices[:, 1], vertices[:, 2], color='black', s=10, label='Vertices')
     
     # Plot start and end points
-    ax.scatter(starts[:, 0], starts[:, 1], starts[:, 2], color='lime', s=200, marker='*', label='Start Points')
-    ax.scatter(ends[:, 0], ends[:, 1], ends[:, 2], color='red', s=200, marker='X', label='End Points')
+    ax.scatter(points[:, 0], points[:, 1], points[:, 2], color='purple', s=200, marker='*', label=desc)
     
     # Labels and title
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    ax.set_title('Mesh with Start and End Points')
+    ax.set_title(f'Mesh with {desc}')
     
     # Add legend
     ax.legend()
@@ -182,4 +181,14 @@ def visualize_mesh_and_points(mesh: Mesh, starts: np.ndarray, ends: np.ndarray):
     ax.set_zlim(mid_z - max_range * 0.6, mid_z + max_range * 0.6)
 
     plt.tight_layout()
-    plt.show()
+
+
+def plot_loss(losses, title="Loss over epochs"):
+    plt.figure(figsize=(10, 5))
+    plt.plot(losses, label="Loss")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.title(title)
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
