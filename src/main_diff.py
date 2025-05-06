@@ -6,14 +6,12 @@ import tqdm
 import matplotlib.pyplot as plt
 
 from geometry.diff_geodesic import batch_diff_straighest_geodesic, get_triangle_normal
-from dataloader.mesh_loader import load_mesh_from_obj, create_triangle, create_tetrahedron
+from dataloader.mesh_loader import load_mesh_from_obj
 from geometry.mesh import MeshPoint, Mesh
-from ui import plot_loss, visualize_mesh_and_path, visualize_mesh_and_points
+from ui import plot_loss, visualize_mesh_and_points
 from constants import DATA_DIR
 from geometry.sampling import uniform_sampling
 
-
-# TODO add unit tests (use pot pourri)
 
 def set_seed(seed: int):
     """Set the random seed for reproducibility."""

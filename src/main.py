@@ -2,6 +2,7 @@ import numpy as np
 import time
 import os
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 from geometry.trace_geodesic import straightest_geodesic
 from dataloader.mesh_loader import load_mesh_from_obj
@@ -36,6 +37,7 @@ def main(n_points=10000, visualize=False):
 
     if visualize:
         visualize_mesh_and_path(mesh, paths)
+        plt.show()
 
 if __name__ == "__main__":
-    main()
+    main(n_points=10, visualize=True)

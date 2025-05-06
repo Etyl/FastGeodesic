@@ -91,6 +91,7 @@ def bary_is_vert(bary) -> Tuple[bool,int]:
 
 def project_vec(v, normal) -> np.ndarray:
     """Project a vector onto a plane defined by its normal."""
+    normal = normalize(normal)
     return v - dot(v, normal) * normal
 
 
@@ -117,7 +118,6 @@ def closest_point_parameter_coplanar(P1, d1, P2, d2) -> Tuple[float, float]:
     return res[0], res[1]
 
 
-# TODO clean this up
 def trace_in_triangles(mesh: Mesh, dir_3d:np.ndarray, curr_point:MeshPoint, curr_tri:int, max_len:float) -> Tuple[np.ndarray,np.ndarray]:
     """Trace a straight line within triangles."""
     # Get the current position
@@ -144,15 +144,11 @@ def trace_in_triangles(mesh: Mesh, dir_3d:np.ndarray, curr_point:MeshPoint, curr
         # Find the intersection parameter t
         t,edge_param = closest_point_parameter_coplanar(curr_pos, dir_3d, p_i, edge_dir)
         
-        if t < -EPS:
-            continue
-        
-        intersection = curr_pos + t * dir_3d
-        
-        if edge_param < -EPS or edge_param > 1-EPS:
+        if t < -EPS or edge_param < -EPS or edge_param > 1+EPS:
             continue
         
         # Valid intersection
+        intersection = curr_pos + t * dir_3d
         intersections.append((t, intersection, edge_idx, edge_param))
     
     if not intersections:
@@ -173,7 +169,7 @@ def trace_in_triangles(mesh: Mesh, dir_3d:np.ndarray, curr_point:MeshPoint, curr
     _, intersection, edge_idx, edge_param = intersections[idx]
 
     if length(curr_pos-intersection)>max_len:
-        # No intersection, use the direction
+        # Intersection is too far, move for max_len in the direction
         next_pos = curr_pos + max_len*dir_3d
         p0 = mesh.positions[mesh.triangles[curr_tri][0]]
         p1 = mesh.positions[mesh.triangles[curr_tri][1]]
@@ -192,7 +188,7 @@ def trace_in_triangles(mesh: Mesh, dir_3d:np.ndarray, curr_point:MeshPoint, curr
     return next_pos, next_bary
 
 
-def common_edge(triangles, tri1, tri2) -> Tuple[List[int], Optional[int], Optional[int]]:
+def common_edge(triangles:np.ndarray, tri1:int, tri2:int) -> Tuple[List[int], Optional[int], Optional[int]]:
     """Find the common edge between two triangles."""
     # Get the vertices of both triangles
     verts1 = set(triangles[tri1,:])
@@ -211,7 +207,7 @@ def common_edge(triangles, tri1, tri2) -> Tuple[List[int], Optional[int], Option
     return list(common_verts), diff_vert_1, diff_vert_2
 
 
-def signed_angle(A, B, N) -> float:
+def signed_angle(A:np.ndarray, B:np.ndarray, N:np.ndarray) -> float:
     """
     Compute the signed angle between two vectors A and B with respect to a normal vector N.
     """
@@ -229,9 +225,10 @@ def signed_angle(A, B, N) -> float:
     angle = np.arctan2(sign, dot_prod)
     return angle  # in radians
 
-def compute_parallel_transport(mesh, curr_tri, next_tri, dir_3d, curr_normal) -> Tuple[np.ndarray,np.ndarray]:
+
+def compute_parallel_transport_edge(mesh:Mesh, curr_tri:int, next_tri:int, dir_3d:np.ndarray, curr_normal:np.ndarray) -> Tuple[np.ndarray,np.ndarray]:
     """
-    Compute the parallel transport of a vector from one triangle to another.
+    Compute the parallel transport of a vector from one triangle to another at an edge.
     """
     if curr_tri == next_tri:
         return dir_3d, curr_normal
@@ -269,7 +266,7 @@ def compute_parallel_transport(mesh, curr_tri, next_tri, dir_3d, curr_normal) ->
     return dir, normal
 
 
-def compute_parallel_transport_vertex(mesh:Mesh, curr_tri, vertex_id, dir_3d, curr_normal) -> Tuple[np.ndarray,int,np.ndarray]:
+def compute_parallel_transport_vertex(mesh:Mesh, curr_tri:int, vertex_id:int, dir_3d:np.ndarray, curr_normal:np.ndarray) -> Tuple[np.ndarray,int,np.ndarray]:
     """
     Compute the parallel transport of a vector at a vertex.
     """
@@ -350,12 +347,13 @@ def compute_parallel_transport_vertex(mesh:Mesh, curr_tri, vertex_id, dir_3d, cu
         v1 = v2
         angle += tri_angle
 
-    return np.zeros(3),0, curr_normal
+    return np.zeros(3), 0, curr_normal
 
 
-def bary_to_uv(bary):
+def bary_to_uv(bary:np.ndarray) -> np.ndarray:
     """Convert barycentric coordinates to UV coordinates."""
     return np.array([bary[1], bary[2]])
+
 
 def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> GeodesicPath:
     """
@@ -369,16 +367,12 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
     Returns:
         A geodesic path
     """
-    # Get the triangle normal
-    current_normal = mesh.triangle_normals[start.face]
-
-    
-    
     # Project the direction onto the triangle plane
+    current_normal = mesh.triangle_normals[start.face]    
     dir = project_vec(dir, current_normal)
 
     len_path = 0.0
-    path_len = length(dir) # TODO change ?
+    path_len = length(dir)
 
     geodesic = GeodesicPath()
     geodesic.start = start
@@ -470,7 +464,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
                 break
             
             # Transport the direction to the adjacent triangle
-            dir, current_normal = compute_parallel_transport(mesh, curr_tri, adj_tri, proj_dir, current_normal)
+            dir, current_normal = compute_parallel_transport_edge(mesh, curr_tri, adj_tri, proj_dir, current_normal)
             geodesic.dirs.append(dir)
             geodesic.normals.append(current_normal)
                         
