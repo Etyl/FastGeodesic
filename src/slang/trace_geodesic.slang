@@ -294,7 +294,7 @@ Tuple<double3,uint,double3> compute_parallel_transport_vertex(Mesh mesh, int cur
     // Compute the parallel transport of a vector at a vertex.
     StructuredBuffer<uint> connected_triangles = mesh.v2t[vertex_id];
     double total_angle = 0.0;
-    for (int k1 = 0; k1 < connected_triangles.getCount(); k1++) {
+    for (int k1 = 1; k1 < connected_triangles[0]+1; k1++) {
         uint tri_id = connected_triangles[k1];
         uint2 vertices = { 0, 0 };
         int idx = 0;
