@@ -270,7 +270,7 @@ def compute_parallel_transport_vertex(mesh:Mesh, curr_tri:int, vertex_id:int, di
     """
     Compute the parallel transport of a vector at a vertex.
     """
-    connected_triangles = mesh.v2t[vertex_id]
+    connected_triangles = mesh.v2t[vertex_id, 1:mesh.v2t[vertex_id,0]+1]
     total_angle = 0.0
     for tri_id in connected_triangles:
         vertices = [0,0]
@@ -437,7 +437,6 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             curr_point = MeshPoint(curr_tri, bary_to_uv(curr_bary))
             
         elif is_edge_bary:
-            # Point is on an edge
             # Find the adjacent triangle across this edge
             edge_local_idx = edge_idx
             adj_tri = mesh.adjacencies[curr_tri][edge_local_idx]

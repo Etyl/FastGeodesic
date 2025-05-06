@@ -3,6 +3,7 @@ import torch
 from typing import List, Optional
 
 from geometry.utils import normalize
+from constants import MAX_ADJACENT_VERTICES
 
 class Mesh:
     def __init__(self):
@@ -10,7 +11,7 @@ class Mesh:
         self.triangles: Optional[np.ndarray] = None
         self.adjacencies: Optional[np.ndarray] = None
         self.triangle_normals: Optional[np.ndarray] = None
-        self.v2t: Optional[List[List[int]]] = None
+        self.v2t: Optional[np.ndarray] = None
 
     def build(self):
         """Build the mesh by computing necessary properties."""
@@ -65,14 +66,17 @@ class Mesh:
     def _compute_vertex_to_triangle_map(self):
         """Create a mapping from vertices to triangles that contain them."""
         num_vertices = len(self.positions)
-        self.v2t = [[] for _ in range(num_vertices)]
+        self.v2t = np.zeros((num_vertices, MAX_ADJACENT_VERTICES),dtype=np.int32)
         
         # For each triangle
         for tri_idx, tri in enumerate(self.triangles):
             # Add this triangle to each vertex's list
-            self.v2t[tri[0]].append(tri_idx)
-            self.v2t[tri[1]].append(tri_idx)
-            self.v2t[tri[2]].append(tri_idx)
+            self.v2t[tri[0],self.v2t[tri[0],0]+1] = tri_idx
+            self.v2t[tri[0],0] += 1
+            self.v2t[tri[1],self.v2t[tri[1],0]+1] = tri_idx
+            self.v2t[tri[1],0] += 1
+            self.v2t[tri[2],self.v2t[tri[2],0]+1] = tri_idx
+            self.v2t[tri[2],0] += 1
 
 class MeshPoint:
     def __init__(self, face=0, uv=np.zeros(2)):
