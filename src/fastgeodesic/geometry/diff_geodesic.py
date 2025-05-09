@@ -4,8 +4,8 @@ from typing import Tuple, List
 from multiprocessing import Pool, cpu_count
 import copy
 
-from geometry.trace_geodesic import straightest_geodesic, GeodesicPath, triangle_normal
-from geometry.mesh import MeshPoint, Mesh
+from fastgeodesic.geometry.trace_geodesic import straightest_geodesic, GeodesicPath, triangle_normal
+from fastgeodesic.geometry.mesh import MeshPoint, Mesh
 
 
 def get_triangle_normal(mesh: Mesh, face_id: int) -> np.ndarray:

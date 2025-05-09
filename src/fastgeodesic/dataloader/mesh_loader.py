@@ -1,6 +1,6 @@
 import numpy as np
 
-from geometry.mesh import Mesh
+from fastgeodesic.geometry.mesh import Mesh
 
 
 def create_triangle() -> Mesh:

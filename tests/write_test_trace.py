@@ -1,8 +1,8 @@
 import os
 import numpy as np
 
-from dataloader.mesh_loader import load_mesh_from_obj
-from constants import DATA_DIR
+from fastgeodesic.dataloader.mesh_loader import load_mesh_from_obj
+from fastgeodesic.constants import DATA_DIR
 
 def write_test():
     mesh = load_mesh_from_obj(os.path.join(DATA_DIR, "cat_head.obj"))

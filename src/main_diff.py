@@ -5,12 +5,12 @@ from typing import List
 import tqdm
 import matplotlib.pyplot as plt
 
-from geometry.diff_geodesic import batch_diff_straighest_geodesic, get_triangle_normal
-from dataloader.mesh_loader import load_mesh_from_obj
-from geometry.mesh import MeshPoint, Mesh
-from ui import plot_loss, visualize_mesh_and_points
-from constants import DATA_DIR
-from geometry.sampling import uniform_sampling
+from fastgeodesic.geometry.diff_geodesic import batch_diff_straighest_geodesic, get_triangle_normal
+from fastgeodesic.dataloader.mesh_loader import load_mesh_from_obj
+from fastgeodesic.geometry.mesh import MeshPoint, Mesh
+from fastgeodesic.ui import plot_loss, visualize_mesh_and_points
+from fastgeodesic.constants import DATA_DIR
+from fastgeodesic.geometry.sampling import uniform_sampling
 
 
 def set_seed(seed: int):

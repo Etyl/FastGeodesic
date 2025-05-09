@@ -4,11 +4,11 @@ import os
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from geometry.trace_geodesic import straightest_geodesic
-from dataloader.mesh_loader import load_mesh_from_obj
-from ui import visualize_mesh_and_path
-from geometry.sampling import uniform_sampling
-from constants import DATA_DIR
+from fastgeodesic.geometry.trace_geodesic import straightest_geodesic
+from fastgeodesic.dataloader.mesh_loader import load_mesh_from_obj
+from fastgeodesic.ui import visualize_mesh_and_path
+from fastgeodesic.geometry.sampling import uniform_sampling
+from fastgeodesic.constants import DATA_DIR
 
 os.environ['PYTHONUNBUFFERED'] = '1'
 
