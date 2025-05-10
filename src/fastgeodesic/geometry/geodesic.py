@@ -6,7 +6,7 @@ import copy
 
 from fastgeodesic.geometry.geodesic_utils import straightest_geodesic, GeodesicPath, triangle_normal
 from fastgeodesic.geometry.mesh import MeshPoint, Mesh
-from constants import EPS
+from fastgeodesic.constants import EPS
 
 
 def get_triangle_normal(mesh: Mesh, face_id: int) -> np.ndarray:
