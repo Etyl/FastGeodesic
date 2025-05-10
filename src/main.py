@@ -4,9 +4,9 @@ import os
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from fastgeodesic.geometry.trace_geodesic import straightest_geodesic
+from fastgeodesic.geometry.geodesic_utils import straightest_geodesic
 from fastgeodesic.dataloader.mesh_loader import load_mesh_from_obj
-from fastgeodesic.ui import visualize_mesh_and_path
+from ui import visualize_mesh_and_path
 from fastgeodesic.geometry.sampling import uniform_sampling
 from fastgeodesic.constants import DATA_DIR
 

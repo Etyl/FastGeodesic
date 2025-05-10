@@ -5,10 +5,10 @@ from typing import List
 import tqdm
 import matplotlib.pyplot as plt
 
-from fastgeodesic.geometry.diff_geodesic import batch_diff_straighest_geodesic, get_triangle_normal
+from fastgeodesic.geometry.geodesic import trace_geodesics, get_triangle_normal
 from fastgeodesic.dataloader.mesh_loader import load_mesh_from_obj
 from fastgeodesic.geometry.mesh import MeshPoint, Mesh
-from fastgeodesic.ui import plot_loss, visualize_mesh_and_points
+from ui import plot_loss, visualize_mesh_and_points
 from fastgeodesic.constants import DATA_DIR
 from fastgeodesic.geometry.sampling import uniform_sampling
 
@@ -72,7 +72,7 @@ class DirNN(torch.nn.Module):
         points = torch.tensor(np.array([mesh_point.interpolate(self.mesh) for mesh_point in mesh_points]),dtype=torch.float64)
         x = torch.cat([points, normals], dim=1)
         dirs = self.mlp(x)
-        geodesics, new_points = batch_diff_straighest_geodesic(self.mesh, mesh_points, dirs, cpus=self.cpus)
+        geodesics, new_points = trace_geodesics(self.mesh, mesh_points, dirs, cpus=self.cpus)
         new_mesh_points = [point_to_uv(self.mesh, new_point, geodesic.end.face) for geodesic, new_point in zip(geodesics, new_points)]
         return new_points, new_mesh_points
 

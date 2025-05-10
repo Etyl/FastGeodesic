@@ -4,7 +4,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from typing import List
 
 from fastgeodesic.geometry.mesh import MeshPoint, Mesh
-from fastgeodesic.geometry.trace_geodesic import GeodesicPath
+from fastgeodesic.geometry.geodesic_utils import GeodesicPath
 
 
 def plot_path(path: GeodesicPath, mesh: Mesh, ax, arrow_scale=0.2):

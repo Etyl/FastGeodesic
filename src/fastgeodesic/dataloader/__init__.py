@@ -1,0 +1,1 @@
+from fastgeodesic.dataloader.mesh_loader import load_mesh_from_obj

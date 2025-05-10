@@ -4,11 +4,11 @@ import os
 import matplotlib.pyplot as plt
 
 
-from fastgeodesic.geometry.trace_geodesic import GeodesicPath, straightest_geodesic
+from fastgeodesic.geometry.geodesic_utils import GeodesicPath, straightest_geodesic
 from fastgeodesic.geometry.mesh import MeshPoint, Mesh
 from fastgeodesic.constants import DATA_DIR, EPS
 from fastgeodesic.dataloader.mesh_loader import load_mesh_from_obj
-from fastgeodesic.ui import visualize_mesh_and_path
+from scripts.ui import visualize_mesh_and_path
 from fastgeodesic.geometry.utils import length
 
 
