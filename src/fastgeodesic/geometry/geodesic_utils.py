@@ -28,8 +28,6 @@ def tri_bary_coords(p0, p1, p2, p) -> np.ndarray:
     d21 = dot(v2, v1)
     
     denom = d00 * d11 - d01 * d01
-    if abs(denom) < EPS:
-        return np.array([1.0, 0.0, 0.0])
     
     v = (d11 * d20 - d01 * d21) / denom
     w = (d00 * d21 - d01 * d20) / denom
@@ -153,7 +151,7 @@ def trace_in_triangles(mesh: Mesh, dir_3d:np.ndarray, curr_point:MeshPoint, curr
     
     if not intersections:
         # No intersection
-        return curr_point, curr_point.get_barycentric_coords(mesh)
+        return curr_point, curr_point.get_barycentric_coords()
     
     # Sort intersections by distance
     intersections.sort(key=lambda x: x[0])

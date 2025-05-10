@@ -5,23 +5,17 @@ from typing import List, Optional
 from fastgeodesic.geometry.utils import normalize
 
 class Mesh:
-    def __init__(self):
-        self.positions: Optional[np.ndarray] = None
-        self.triangles: Optional[np.ndarray] = None
-        self.adjacencies: Optional[np.ndarray] = None
-        self.triangle_normals: Optional[np.ndarray] = None
-        self.v2t: Optional[List[List[int]]] = None
+    def __init__(self, positions, triangles):
+        self.positions: np.ndarray = positions
+        self.triangles: np.ndarray = triangles
+        self.adjacencies: np.ndarray = self._compute_adjacencies()
+        self.triangle_normals: np.ndarray = self._compute_triangle_normals()
+        self.v2t: List[List[int]] = self._compute_vertex_to_triangle_map()
 
-    def build(self):
-        """Build the mesh by computing necessary properties."""
-        self._compute_adjacencies()
-        self._compute_triangle_normals()
-        self._compute_vertex_to_triangle_map()
-
-    def _compute_adjacencies(self):
+    def _compute_adjacencies(self) -> np.ndarray:
         """Compute triangle adjacency information."""
         num_triangles = len(self.triangles)
-        self.adjacencies = -np.ones((num_triangles,3),dtype=int)
+        adjacencies = -np.ones((num_triangles,3),dtype=int)
         
         # Create an edge-to-triangle map
         edge_to_triangle = {}
@@ -42,16 +36,17 @@ class Mesh:
                     other_tri_idx, other_local_edge_idx = edge_to_triangle[edge]
                     
                     # Set adjacency for both triangles
-                    self.adjacencies[tri_idx][local_edge_idx] = other_tri_idx
-                    self.adjacencies[other_tri_idx][other_local_edge_idx] = tri_idx
+                    adjacencies[tri_idx][local_edge_idx] = other_tri_idx
+                    adjacencies[other_tri_idx][other_local_edge_idx] = tri_idx
                 else:
                     # New edge
                     edge_to_triangle[edge] = (tri_idx, local_edge_idx)
+        return adjacencies
 
 
-    def _compute_triangle_normals(self):
+    def _compute_triangle_normals(self) -> np.ndarray:
         """Compute vertex normals as the average of adjacent face normals."""
-        self.triangle_normals = np.zeros((len(self.triangles), 3), dtype=np.float64)
+        triangle_normals = np.zeros((len(self.triangles), 3), dtype=np.float64)
         
         # For each triangle
         for i,tri in enumerate(self.triangles):
@@ -60,19 +55,21 @@ class Mesh:
             p2 = self.positions[tri[2]]
             
             # Compute triangle normal
-            self.triangle_normals[i] = normalize(np.cross(p1 - p0, p2 - p0))
+            triangle_normals[i] = normalize(np.cross(p1 - p0, p2 - p0))
+        return triangle_normals
 
-    def _compute_vertex_to_triangle_map(self):
+    def _compute_vertex_to_triangle_map(self) -> List[List[int]]:
         """Create a mapping from vertices to triangles that contain them."""
         num_vertices = len(self.positions)
-        self.v2t = [[] for _ in range(num_vertices)]
+        v2t = [[] for _ in range(num_vertices)]
         
         # For each triangle
         for tri_idx, tri in enumerate(self.triangles):
             # Add this triangle to each vertex's list
-            self.v2t[tri[0]].append(tri_idx)
-            self.v2t[tri[1]].append(tri_idx)
-            self.v2t[tri[2]].append(tri_idx)
+            v2t[tri[0]].append(tri_idx)
+            v2t[tri[1]].append(tri_idx)
+            v2t[tri[2]].append(tri_idx)
+        return v2t
 
 class MeshPoint:
     def __init__(self, face=0, uv=np.zeros(2)):

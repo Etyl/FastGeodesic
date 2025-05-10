@@ -90,7 +90,7 @@ def visualize_mesh_and_path(mesh:Mesh, paths:List[GeodesicPath], arrow_scale=0.2
     
     # 2. Plot vertices
     vertices = np.array(mesh.positions)
-    ax.scatter(vertices[:, 0], vertices[:, 1], vertices[:, 2], color='black', s=10, label='Vertices')
+    ax.scatter(vertices[:, 0], vertices[:, 1], vertices[:, 2], color='black', s=2, label='Vertices')
     
     # 3. Plot the path
     for path in paths:

@@ -5,7 +5,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 from fastgeodesic.geometry.geodesic_utils import straightest_geodesic
-from fastgeodesic.dataloader.mesh_loader import load_mesh_from_obj
+from fastgeodesic.dataloader.mesh_loader import load_mesh_from_file
 from ui import visualize_mesh_and_path
 from fastgeodesic.geometry.sampling import uniform_sampling
 from fastgeodesic.constants import DATA_DIR
@@ -13,11 +13,11 @@ from fastgeodesic.constants import DATA_DIR
 os.environ['PYTHONUNBUFFERED'] = '1'
 
 def main(n_points=10000, visualize=False):
-    mesh = load_mesh_from_obj(os.path.join(DATA_DIR, "cat_head.obj"))
+    mesh = load_mesh_from_file(os.path.join(DATA_DIR, "model_normalized.ply"))
 
     samples = uniform_sampling(mesh, n_points)
     directions = [
-        np.random.normal(size=3) for _ in range(n_points)
+        10*np.random.normal(size=3) for _ in range(n_points)
     ]
 
     paths = []
