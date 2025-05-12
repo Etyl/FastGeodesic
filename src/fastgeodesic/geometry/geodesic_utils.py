@@ -97,12 +97,26 @@ def closest_point_parameter_coplanar(P1, d1, P2, d2) -> Tuple[float, float]:
     """
     Finds the closest points on two lines in 3D.
     Returns the parameters t1 and t2 for the closest points on the lines.
+    d1 is supposed to be normalized
     """
+    d2_length = length(d2)
+    d2 = normalize(d2)
     A = np.array([d1, -d2])
     M = A @ A.T
     det = M[0, 0] * M[1, 1] - M[0, 1] * M[1, 0]
     if abs(det) < EPS:
-        return -1, -1
+        # d1 and d2 colinear
+        # check if P1 and P2 are on same line
+        if abs(normalize(P2-P1)@d1) < EPS:
+            if length(P2-P1)<EPS:
+                P = P2+d2*d2_length
+                s = 1
+            else:
+                P = P2
+                s = 0
+            return ((P-P1)@d1), s
+        else:
+            return -1, -1
     
     M_inv = np.array([
         [M[1, 1], -M[0, 1]], 
@@ -110,10 +124,9 @@ def closest_point_parameter_coplanar(P1, d1, P2, d2) -> Tuple[float, float]:
     ]) / det
 
     A_inv = A.T @ M_inv
-
     res = (P2 - P1) @ A_inv
 
-    return res[0], res[1]
+    return res[0], res[1]/d2_length
 
 
 def trace_in_triangles(mesh: Mesh, dir_3d:np.ndarray, curr_point:MeshPoint, curr_tri:int, max_len:float) -> Tuple[np.ndarray,np.ndarray]:
@@ -158,11 +171,10 @@ def trace_in_triangles(mesh: Mesh, dir_3d:np.ndarray, curr_point:MeshPoint, curr
 
     idx = 0
     if len(intersections) > 1:
-        if intersections[0][0] < EPS:
-            # If both intersections are very close, use the second one
+        if len(intersections) > 2 and intersections[1][0] < EPS:
+            idx = 2
+        elif intersections[0][0] < EPS:
             idx = 1
-        else:
-            idx = 0
 
     _, intersection, edge_idx, edge_param = intersections[idx]
 
@@ -320,7 +332,15 @@ def compute_parallel_transport_vertex(mesh:Mesh, curr_tri:int, vertex_id:int, di
             if v != v1 and v != vertex_id:
                 local_edge_idx = (idx+1)%3
                 break
+        
         next_tri = mesh.adjacencies[curr_tri][local_edge_idx]
+        if next_tri==-1:
+            angle_diff = half_angle-angle
+            axis = n
+            edge = mesh.positions[v1]-mesh.positions[vertex_id]
+            new_dir = edge * np.cos(angle_diff) + cross(axis, edge) * np.sin(angle_diff) + axis * dot(axis, edge) * (1 - np.cos(angle_diff))
+            return new_dir, curr_tri, normal_sign*n
+        
         v2 = (set(mesh.triangles[next_tri])-{v1,vertex_id}).pop()
         
         p0 = mesh.positions[vertex_id]
@@ -424,7 +444,9 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             p0_adj = mesh.positions[mesh.triangles[next_tri][0]]
             p1_adj = mesh.positions[mesh.triangles[next_tri][1]]
             p2_adj = mesh.positions[mesh.triangles[next_tri][2]]
-            next_bary = tri_bary_coords(p0_adj, p1_adj, p2_adj, next_pos)
+            next_bary = np.zeros(3)
+            dist = [(p0_adj-next_pos)@(p0_adj-next_pos), (p1_adj-next_pos)@(p1_adj-next_pos), (p2_adj-next_pos)@(p2_adj-next_pos)]
+            next_bary[np.argmin(dist)] = 1
                         
             # Update current state
             curr_tri = next_tri

@@ -79,8 +79,12 @@ def test_barycentric_degenerate_triangle():
     p0 = p1 = p2 = np.array([1.0, 1.0])
     p = np.array([1.0, 1.0])  # Same point
 
-    result = tri_bary_coords(p0, p1, p2, p)
-    assert np.allclose(result, [1.0, 0.0, 0.0])  # Fallback case
+    try:
+        result = tri_bary_coords(p0, p1, p2, p) # Should fail
+    except:
+        result = None
+    
+    assert result is None
 
 
 # Tests for point_is_edge

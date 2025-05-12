@@ -8,7 +8,6 @@ from fastgeodesic.geometry.geodesic_utils import GeodesicPath, straightest_geode
 from fastgeodesic.geometry.mesh import MeshPoint, Mesh
 from fastgeodesic.constants import DATA_DIR, EPS
 from fastgeodesic.dataloader.mesh_loader import load_mesh_from_obj
-from scripts.ui import visualize_mesh_and_path
 from fastgeodesic.geometry.utils import length
 
 

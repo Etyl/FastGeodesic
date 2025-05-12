@@ -40,4 +40,5 @@ def main(n_points=10000, visualize=False):
         plt.show()
 
 if __name__ == "__main__":
-    main(n_points=10, visualize=True)
+    np.random.seed(42)
+    main(n_points=1000, visualize=False)
