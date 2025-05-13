@@ -231,14 +231,24 @@ def test_lines_parallel():
 def test_lines_coincident():
     P1 = np.array([0.0, 0.0, 0.0])
     d1 = np.array([1.0, 0.0, 0.0])  # Line 1 along the x-axis
+    P2 = np.array([1.0, 0.0, 0.0])  # Coincident with line 1
+    d2 = np.array([1.0, 0.0, 0.0])  # Coincident direction
+
+    # lines are coincident, should return intersection at P2
+    t1, t2 = closest_point_parameter_coplanar(P1, d1, P2, d2)
+    assert np.isclose(t1, 1)
+    assert np.isclose(t2, 0)
+
+def test_lines_coincident_2():
+    P1 = np.array([0.0, 0.0, 0.0])
+    d1 = np.array([1.0, 0.0, 0.0])  # Line 1 along the x-axis
     P2 = np.array([0.0, 0.0, 0.0])  # Coincident with line 1
     d2 = np.array([1.0, 0.0, 0.0])  # Coincident direction
 
-    # lines are coincident, should return -1, -1
+    # lines are coincident, should return intersection at P2+d2
     t1, t2 = closest_point_parameter_coplanar(P1, d1, P2, d2)
-    assert np.isclose(t1, -1)
-    assert np.isclose(t2, -1)
-
+    assert np.isclose(t1, 1)
+    assert np.isclose(t2, 1)
 
 # TODO add tests for trace_in_triangles
 

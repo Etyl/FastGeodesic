@@ -106,14 +106,13 @@ def closest_point_parameter_coplanar(P1, d1, P2, d2) -> Tuple[float, float]:
     det = M[0, 0] * M[1, 1] - M[0, 1] * M[1, 0]
     if abs(det) < EPS:
         # d1 and d2 colinear
-        # check if P1 and P2 are on same line
-        if abs(normalize(P2-P1)@d1) < EPS:
-            if length(P2-P1)<EPS:
-                P = P2+d2*d2_length
-                s = 1
-            else:
-                P = P2
-                s = 0
+        if length(P2-P1)<EPS: # Check if P1 and P2 coincide
+            P = P2+d2*d2_length
+            s = 1
+            return ((P-P1)@d1), s
+        elif abs(normalize(P2-P1)@d1) > 1-EPS: # Check if lines coincide
+            P = P2
+            s = 0
             return ((P-P1)@d1), s
         else:
             return -1, -1
