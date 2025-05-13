@@ -1,6 +1,6 @@
 import numpy as np
 
-from fastgeodesic.geometry.geodesic_utils import *
+from geodiff.geometry.geodesic_utils import *
 
 
 def test_triangle_normal_basic():

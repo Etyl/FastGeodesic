@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from typing import List, Optional
 
-from fastgeodesic.geometry.utils import normalize
+from geodiff.geometry.utils import normalize
 
 class Mesh:
     def __init__(self, positions, triangles):

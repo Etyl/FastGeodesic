@@ -2,8 +2,8 @@ import numpy as np
 import torch
 from typing import List
 
-from fastgeodesic.geometry.mesh import Mesh, MeshPoint
-from fastgeodesic.geometry.utils import area_triangle
+from geodiff.geometry.mesh import Mesh, MeshPoint
+from geodiff.geometry.utils import area_triangle
 
 
 def uniform_sampling(mesh: Mesh, n_points: int, tensor=False) -> List[MeshPoint]:

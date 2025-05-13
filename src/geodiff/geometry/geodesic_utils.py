@@ -1,9 +1,9 @@
 import numpy as np
 from typing import List,Optional,Tuple
 
-from fastgeodesic.geometry.mesh import Mesh, MeshPoint
-from fastgeodesic.geometry.utils import dot, cross, length, normalize, triangle_normal
-from fastgeodesic.constants import EPS
+from geodiff.geometry.mesh import Mesh, MeshPoint
+from geodiff.geometry.utils import dot, cross, length, normalize, triangle_normal
+from geodiff.constants import EPS
 
 
 class GeodesicPath:

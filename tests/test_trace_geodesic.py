@@ -4,11 +4,11 @@ import os
 import matplotlib.pyplot as plt
 
 
-from fastgeodesic.geometry.geodesic_utils import GeodesicPath, straightest_geodesic
-from fastgeodesic.geometry.mesh import MeshPoint, Mesh
-from fastgeodesic.constants import DATA_DIR, EPS
-from fastgeodesic.dataloader.mesh_loader import load_mesh_from_obj
-from fastgeodesic.geometry.utils import length
+from geodiff.geometry.geodesic_utils import GeodesicPath, straightest_geodesic
+from geodiff.geometry.mesh import MeshPoint, Mesh
+from geodiff.constants import DATA_DIR, EPS
+from geodiff.dataloader.mesh_loader import load_mesh_from_obj
+from geodiff.geometry.utils import length
 
 
 def get_pp3d_geodesic(mesh_path:str, start: MeshPoint, direction: np.ndarray) -> GeodesicPath:

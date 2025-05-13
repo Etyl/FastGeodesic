@@ -4,9 +4,9 @@ from typing import Tuple, List, Optional
 from multiprocessing import Pool, cpu_count
 import copy
 
-from fastgeodesic.geometry.geodesic_utils import straightest_geodesic, GeodesicPath, triangle_normal
-from fastgeodesic.geometry.mesh import MeshPoint, Mesh
-from fastgeodesic.constants import EPS
+from geodiff.geometry.geodesic_utils import straightest_geodesic, GeodesicPath, triangle_normal
+from geodiff.geometry.mesh import MeshPoint, Mesh
+from geodiff.constants import EPS
 
 
 def get_triangle_normal(mesh: Mesh, face_id: int) -> np.ndarray:

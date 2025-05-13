@@ -1,5 +1,5 @@
 [project]
-name = "fastgeodesic"
+name = "geodiff"
 version = "0.0.1"
 authors = [
   { name="Hippolyte Verninas"},

@@ -3,7 +3,7 @@ from typing import Union
 from pathlib import Path
 import os
 
-from fastgeodesic.geometry.mesh import Mesh
+from geodiff.geometry.mesh import Mesh
 
 
 def create_triangle() -> Mesh:

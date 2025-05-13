@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from typing import List
 
-from fastgeodesic.geometry.mesh import MeshPoint, Mesh
-from fastgeodesic.geometry.geodesic_utils import GeodesicPath
+from geodiff.geometry.mesh import MeshPoint, Mesh
+from geodiff.geometry.geodesic_utils import GeodesicPath
 
 
 def plot_path(path: GeodesicPath, mesh: Mesh, ax, arrow_scale=0.2):
