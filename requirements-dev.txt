@@ -1,3 +1,4 @@
 torchviz==0.0.3
 pytest==8.3.5
 potpourri3d==1.2.1
+pytest-cov==6.1.1

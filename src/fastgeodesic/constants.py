@@ -5,4 +5,4 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 
-EPS = 1e-6
+EPS = 1e-12
