@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from geodiff.geometry.geodesic_utils import GeodesicPath, straightest_geodesic
 from geodiff.geometry.mesh import MeshPoint, Mesh
 from geodiff.constants import DATA_DIR, EPS
-from geodiff.dataloader.mesh_loader import load_mesh_from_obj
+from geodiff.dataloader.mesh_loader import load_mesh_from_file
 from geodiff.geometry.utils import length
 
 
@@ -15,9 +15,11 @@ def get_pp3d_geodesic(mesh_path:str, start: MeshPoint, direction: np.ndarray) ->
     V,F = pp3d.read_mesh(mesh_path)
     tracer = pp3d.GeodesicTracer(V,F)
     pp3d_trace = tracer.trace_geodesic_from_face(start.face, start.get_barycentric_coords(), direction)
-    pp3d_geodesic = GeodesicPath()
-    pp3d_geodesic.path = pp3d_trace
-    pp3d_geodesic.start = start
+    pp3d_geodesic = GeodesicPath(
+        start = start,
+        end = MeshPoint(),
+        path = pp3d_trace,
+    )
     return pp3d_geodesic
 
 
@@ -45,10 +47,10 @@ def test_trace_geodesic():
 
     mesh_path = os.path.join(DATA_DIR, 'cat_head.obj')
     assert os.path.exists(mesh_path), "Mesh file does not exist."
-    mesh = load_mesh_from_obj(mesh_path)
+    mesh = load_mesh_from_file(mesh_path)
 
     total_path = []
-    for k,(start_point, start_direction) in enumerate(zip(start_points, start_directions)):   
+    for start_point, start_direction in zip(start_points, start_directions):   
         pp3d_geodesic = get_pp3d_geodesic(mesh_path, start_point, start_direction)
         path = straightest_geodesic(mesh, start_point, start_direction)
 

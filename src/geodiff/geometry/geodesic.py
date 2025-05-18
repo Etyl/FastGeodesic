@@ -58,7 +58,7 @@ def get_tensor_from_path(mesh: Mesh, path: GeodesicPath, start: MeshPoint, dir: 
     return tensor_point
 
 
-def tri_bary_coords(p0, p1, p2, p) -> np.ndarray:
+def tri_bary_coords(p0, p1, p2, p) -> torch.Tensor:
     """Compute barycentric coordinates of p in the triangle (p0, p1, p2)."""
     v0 = p1 - p0
     v1 = p2 - p0
@@ -72,7 +72,7 @@ def tri_bary_coords(p0, p1, p2, p) -> np.ndarray:
     
     denom = d00 * d11 - d01 * d01
     if abs(denom) < EPS:
-        return np.array([1.0, 0.0, 0.0])
+        return torch.tensor([1.0, 0.0, 0.0])
     
     v = (d11 * d20 - d01 * d21) / denom
     w = (d00 * d21 - d01 * d20) / denom
@@ -93,7 +93,7 @@ def get_meshpoint_3d(mesh:Mesh, face:int, point:torch.Tensor) -> MeshPoint:
     
 
 # TODO toggle gradient
-def trace_geodesics(mesh: Mesh, starts: List[MeshPoint], dirs: List[torch.tensor], gradient:bool=True) -> Tuple[List[MeshPoint], torch.Tensor]: 
+def trace_geodesics(mesh: Mesh, starts: List[MeshPoint], dirs: List[torch.Tensor], gradient:bool=True) -> Tuple[List[MeshPoint], torch.Tensor]: 
     """
     Computes the geodesic path using finite differences for gradient computation.
     """

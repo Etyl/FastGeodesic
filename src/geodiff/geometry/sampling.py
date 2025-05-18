@@ -6,7 +6,8 @@ from geodiff.geometry.mesh import Mesh, MeshPoint
 from geodiff.geometry.utils import area_triangle
 
 
-def uniform_sampling(mesh: Mesh, n_points: int, tensor=False) -> List[MeshPoint]:
+# TODO optimize sampling time (numba?)
+def uniform_sampling(mesh: Mesh, n_points: int, tensor: bool = False) -> List[MeshPoint]:
     """
     Sample points uniformly from the mesh.
 

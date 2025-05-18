@@ -7,12 +7,12 @@ from geodiff.constants import EPS
 
 
 class GeodesicPath:
-    def __init__(self):
-        self.start : Optional[MeshPoint] = None
-        self.end : Optional[MeshPoint] = None
-        self.path : List[np.ndarray] = []
-        self.dirs : List[np.ndarray] = []
-        self.normals : List[np.ndarray] = []
+    def __init__(self, start, end, path=[], dirs=[], normals=[]):
+        self.start : MeshPoint = start
+        self.end : MeshPoint = end
+        self.path : List[np.ndarray] = path
+        self.dirs : List[np.ndarray] = dirs
+        self.normals : List[np.ndarray] = normals
 
 
 def tri_bary_coords(p0, p1, p2, p) -> np.ndarray:
@@ -166,7 +166,7 @@ def trace_in_triangles(mesh: Mesh, dir_3d:np.ndarray, curr_point:MeshPoint, curr
     
     if not intersections:
         # No intersection
-        return curr_point, curr_point.get_barycentric_coords()
+        return curr_pos, curr_point.get_barycentric_coords()
     
     # Sort intersections by distance
     intersections.sort(key=lambda x: x[0])
@@ -394,11 +394,9 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
     len_path = 0.0
     path_len = length(dir)
 
-    geodesic = GeodesicPath()
-    geodesic.start = start
-    geodesic.path.append(start.interpolate(mesh))
-    geodesic.dirs.append(normalize(dir))
-    geodesic.normals.append(current_normal)
+    path = [start.interpolate(mesh)]
+    dirs = [normalize(dir)]
+    normals = [current_normal]
     
     next_bary = np.zeros(3)
     curr_bary = np.array([1 - start.uv[0] - start.uv[1], start.uv[0], start.uv[1]])
@@ -430,7 +428,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
         
         # Update the path
         len_path += length(next_pos - curr_pos)
-        geodesic.path.append(next_pos.copy())
+        path.append(next_pos.copy())
         
         # Determine the next triangle
         if is_vert_bary:
@@ -439,8 +437,8 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             
             # Transport the direction to the next triangle
             dir, next_tri, current_normal = compute_parallel_transport_vertex(mesh, curr_tri, v_idx, proj_dir, current_normal)
-            geodesic.dirs.append(dir)
-            geodesic.normals.append(current_normal)
+            dirs.append(dir)
+            normals.append(current_normal)
 
             # Compute barycentric coordinates in the adjacent triangle
             p0_adj = mesh.positions[mesh.triangles[next_tri][0]]
@@ -474,7 +472,7 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             
             if adj_tri == -1:
                 curr_point = MeshPoint(adj_tri, bary_to_uv(next_bary))
-                geodesic.dirs.append(dir)
+                dirs.append(dir)
                 break
             
             # Get the common edge vertices
@@ -487,8 +485,8 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             
             # Transport the direction to the adjacent triangle
             dir, current_normal = compute_parallel_transport_edge(mesh, curr_tri, adj_tri, proj_dir, current_normal)
-            geodesic.dirs.append(dir)
-            geodesic.normals.append(current_normal)
+            dirs.append(dir)
+            normals.append(current_normal)
                         
             # Update current state
             curr_tri = adj_tri
@@ -510,11 +508,16 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:np.ndarray) -> Geodesic
             
             # Continue in the same direction
             dir = proj_dir
-            geodesic.dirs.append(dir)
-            geodesic.normals.append(current_normal)
+            dirs.append(dir)
+            normals.append(current_normal)
     
     # Set the end point
-    geodesic.end = curr_point
-    
+    geodesic = GeodesicPath(
+        start=start,
+        end = curr_point,
+        path = path,
+        dirs = dirs,
+        normals = normals,
+    )    
     return geodesic
 

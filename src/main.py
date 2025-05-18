@@ -13,7 +13,7 @@ from geodiff.constants import DATA_DIR
 os.environ['PYTHONUNBUFFERED'] = '1'
 
 def main(n_points=10000, visualize=False):
-    mesh = load_mesh_from_file(os.path.join(DATA_DIR, "model_normalized.ply"))
+    mesh = load_mesh_from_file(os.path.join(DATA_DIR, "cat_head.obj"))
 
     samples = uniform_sampling(mesh, n_points)
     directions = [
@@ -41,4 +41,4 @@ def main(n_points=10000, visualize=False):
 
 if __name__ == "__main__":
     np.random.seed(42)
-    main(n_points=1000, visualize=False)
+    main(n_points=1, visualize=True)

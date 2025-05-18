@@ -16,12 +16,13 @@ license-files = ["LICENSE.md"]
 dependencies = [
   "torch>=2.7.0",
   "numpy>=2.2.4",
-  "tqdm>=4.67.1"
+  "tqdm>=4.67.1",
+  "trimesh==4.6.9"
 ]
 
 [project.urls]
-Homepage = "https://github.com/Etyl/FastGeodesic"
-Issues = "https://github.com/Etyl/FastGeodesic/issues"
+Homepage = "https://github.com/Etyl/GeoDiff"
+Issues = "https://github.com/Etyl/GeoDiff/issues"
 
 [build-system]
 requires = ["hatchling >= 1.26"]

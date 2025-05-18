@@ -1,16 +1,28 @@
 import numpy as np
 import torch
-from typing import List, Optional
+from typing import List, Union
 
 from geodiff.geometry.utils import normalize
 
 class Mesh:
-    def __init__(self, positions, triangles):
+    def __init__(self, positions, triangles, adjacencies=None, triangle_normals=None, v2t=None):
         self.positions: np.ndarray = positions
         self.triangles: np.ndarray = triangles
-        self.adjacencies: np.ndarray = self._compute_adjacencies()
-        self.triangle_normals: np.ndarray = self._compute_triangle_normals()
-        self.v2t: List[List[int]] = self._compute_vertex_to_triangle_map()
+        
+        if adjacencies is not None:
+            self.adjacencies = adjacencies
+        else:
+            self.adjacencies: np.ndarray = self._compute_adjacencies()
+        
+        if triangle_normals is not None:
+            self.triangle_normals = triangle_normals
+        else:
+            self.triangle_normals: np.ndarray = self._compute_triangle_normals()
+        
+        if v2t is not None:
+            self.v2t = v2t
+        else:
+            self.v2t: List[List[int]] = self._compute_vertex_to_triangle_map()
 
     def _compute_adjacencies(self) -> np.ndarray:
         """Compute triangle adjacency information."""
@@ -72,7 +84,7 @@ class Mesh:
         return v2t
 
 class MeshPoint:
-    def __init__(self, face=0, uv=np.zeros(2)):
+    def __init__(self, face:int = 0, uv: Union[torch.Tensor, np.ndarray] = np.zeros(2)):
         self.face = face
         self.uv = uv
         if isinstance(uv, torch.Tensor):
@@ -80,7 +92,7 @@ class MeshPoint:
         else:
             self.tensor = False
             
-    def interpolate(self, mesh:Mesh, tensor=False):
+    def interpolate(self, mesh:Mesh, tensor=False) -> Union[torch.Tensor, np.ndarray]:
         face = self.face
         uv = self.uv
         p0 = mesh.positions[mesh.triangles[face][0]]
@@ -97,13 +109,13 @@ class MeshPoint:
         pos = (1 - uv[0] - uv[1]) * p0 + uv[0] * p1 + uv[1] * p2
         return pos
     
-    def detach(self):    
+    def detach(self) -> 'MeshPoint':    
         if self.tensor:
             return MeshPoint(self.face, self.uv.detach())
         else:
             return MeshPoint(self.face, self.uv.copy())
         
-    def get_barycentric_coords(self):
+    def get_barycentric_coords(self) -> Union[torch.Tensor, np.ndarray]:
         if self.tensor:
             return torch.tensor([1.0-self.uv[0]-self.uv[1], self.uv[0], self.uv[1]],dtype=torch.float64)
         else:
