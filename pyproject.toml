@@ -20,6 +20,12 @@ dependencies = [
   "trimesh==4.6.9"
 ]
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [project.urls]
 Homepage = "https://github.com/Etyl/GeoDiff"
 Issues = "https://github.com/Etyl/GeoDiff/issues"
