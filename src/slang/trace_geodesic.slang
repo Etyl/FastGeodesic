@@ -8,10 +8,14 @@ const double EPS = 0.00001;
 struct GeodesicPath {
     MeshPoint start;
     MeshPoint end;
-    AppendStructuredBuffer<double3> path;
-    AppendStructuredBuffer<double3> dirs;
-    AppendStructuredBuffer<double3> normals;
-    __init() {}
+    double3 end_dir;
+    double3 end_normal;
+    __init(MeshPoint start, MeshPoint end, double3 end_dir, double3 end_normal) {
+        this.start = start;
+        this.end = end;
+        this.end_dir = end_dir;
+        this.end_normal = end_normal;
+    }
 }
 
 double3 tri_bary_coords(double3 p0, double3 p1, double3 p2, double3 p) {
@@ -248,7 +252,6 @@ double signed_angle(double3 A, double3 B, double3 N) {
 }
 
 // TODO use Tuple
-
 double2x3 compute_parallel_transport_edge(Mesh mesh, int curr_tri, int next_tri, double3 dir_3d, double3 curr_normal) {
     // Compute the parallel transport of a vector from one triangle to another.
     if (curr_tri == next_tri) {
@@ -414,12 +417,6 @@ GeodesicPath straighest_geodesic(Mesh mesh, MeshPoint start, double3 dir) {
     double len_path = 0;
     double path_len = length(dir);
 
-    GeodesicPath geodesic = GeodesicPath();
-    geodesic.start = start;
-    geodesic.path.Append(start.interpolate(mesh));
-    geodesic.dirs.Append(normalize(dir));
-    geodesic.normals.Append(current_normal);
-
     double3 next_bary;
     double3 curr_bary = { 1 - start.uv[0] - start.uv[1], start.uv[0], start.uv[1] };
     double3 curr_pos = start.interpolate(mesh);
@@ -446,24 +443,21 @@ GeodesicPath straighest_geodesic(Mesh mesh, MeshPoint start, double3 dir) {
         next_bary = res[1];
 
         // Check if the point is on an edge or vertex
-        var res_edge = bary_is_edge(next_bary);
-        var res_vert = bary_is_vertex(next_bary);
+        Tuple<bool,int> res_edge = bary_is_edge(next_bary);
+        Tuple<bool,int> res_vert = bary_is_vertex(next_bary);
         bool is_edge_bary=res_edge._0, is_vert_bary=res_vert._0;
         int edge_idx=res_edge._1, vert_idx=res_vert._1;
 
         // Update the path
         len_path += length(next_pos - curr_pos);
-        geodesic.path.Append(next_pos);
 
         if (is_vert_bary) {
             uint v_idx = mesh.triangles[curr_tri][vert_idx];
 
             // Transport the direction to the next triangle
-            var res = compute_parallel_transport_vertex(mesh, curr_tri, v_idx, proj_dir, current_normal);
+            Tuple<double3,uint,double3> res = compute_parallel_transport_vertex(mesh, curr_tri, v_idx, proj_dir, current_normal);
             double3 dir = res._0, current_normal = res._2;
             uint next_tri = res._1;
-            geodesic.dirs.Append(dir);
-            geodesic.normals.Append(current_normal);
 
             // Compute barycentric coordinates in the adjacent triangle
             double3 p0_adj = mesh.positions[mesh.triangles[next_tri][0]];
@@ -495,12 +489,11 @@ GeodesicPath straighest_geodesic(Mesh mesh, MeshPoint start, double3 dir) {
 
             if (adj_tri == -1) {
                 curr_point = MeshPoint(adj_tri, bary_to_uv(next_bary));
-                geodesic.dirs.Append(dir);
                 break;
             }
 
             // Get the common edge vertices
-            var res = common_edge(mesh, curr_tri, adj_tri);
+            int4 res = common_edge(mesh, curr_tri, adj_tri);
             int2 e = { res[0], res[1] };
 
             if (e[0] == -1) {
@@ -511,10 +504,8 @@ GeodesicPath straighest_geodesic(Mesh mesh, MeshPoint start, double3 dir) {
 
             // Transport the direction to the adjacent triangle
 
-            var res_transport = compute_parallel_transport_edge(mesh, curr_tri, adj_tri, proj_dir, current_normal);
+            double2x3 res_transport = compute_parallel_transport_edge(mesh, curr_tri, adj_tri, proj_dir, current_normal);
             double3 dir = res_transport[0], current_normal = res_transport[1];
-            geodesic.dirs.Append(dir);
-            geodesic.normals.Append(current_normal);
 
             // Update current state
             curr_tri = adj_tri;
@@ -536,11 +527,8 @@ GeodesicPath straighest_geodesic(Mesh mesh, MeshPoint start, double3 dir) {
             
             // Continue in the same direction
             dir = proj_dir;
-            geodesic.dirs.Append(dir);
-            geodesic.normals.Append(current_normal);
         }
     }
-
-    geodesic.end = curr_point;
+    GeodesicPath geodesic = GeodesicPath(start, curr_point, dir, current_normal);
     return geodesic;
 }
