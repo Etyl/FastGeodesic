@@ -2,17 +2,17 @@ implementing trace_geodesic;
 
 struct Mesh {
     StructuredBuffer<double3> positions;
-    StructuredBuffer<uint3> triangles;
-    StructuredBuffer<uint3> adjacencies;
+    StructuredBuffer<int3> triangles;
+    StructuredBuffer<int3> adjacencies;
     StructuredBuffer<double3> triangle_normals;
-    StructuredBuffer<StructuredBuffer<uint>> v2t;
+    StructuredBuffer<StructuredBuffer<int>> v2t;
 
     __init(
         StructuredBuffer<double3> positions,
-        StructuredBuffer<uint3> triangles,
-        StructuredBuffer<uint3> adjacencies,
+        StructuredBuffer<int3> triangles,
+        StructuredBuffer<int3> adjacencies,
         StructuredBuffer<double3> triangle_normals,
-        StructuredBuffer<StructuredBuffer<uint>> v2t,
+        StructuredBuffer<StructuredBuffer<int>> v2t,
     ) {
         this.positions = positions;
         this.triangles = triangles;
@@ -23,10 +23,10 @@ struct Mesh {
 }
 
 struct MeshPoint {
-    uint face;
+    int face;
     double2 uv;
 
-    __init(uint face, double2 uv) {
+    __init(int face, double2 uv) {
         this.face = face;
         this.uv = uv;
     }

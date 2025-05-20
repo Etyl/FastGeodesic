@@ -106,7 +106,7 @@ double2x3 trace_in_triangles(Mesh mesh, double3 dir_3d, MeshPoint curr_point, in
 
     // Find the intersection with the triangle edges
     double2x3 intersections[3];
-    uint k = 0;
+    int k = 0;
     
     // Check each edge
     int2 edges[3] = { {0, 1}, {1, 2}, {2, 0} };
@@ -151,8 +151,8 @@ double2x3 trace_in_triangles(Mesh mesh, double3 dir_3d, MeshPoint curr_point, in
 
     // TODO check if OK
     // Sort intersections by distance
-    for (uint i = 0; i < k - 1; i++) {
-        for (uint j = i + 1; j < k; j++) {
+    for (int i = 0; i < k - 1; i++) {
+        for (int j = i + 1; j < k; j++) {
             if (length(intersections[i][0] - curr_pos) > length(intersections[j][0] - curr_pos)) {
                 double2x3 temp = intersections[i];
                 intersections[i] = intersections[j];
@@ -161,7 +161,7 @@ double2x3 trace_in_triangles(Mesh mesh, double3 dir_3d, MeshPoint curr_point, in
         }
     }
 
-    uint idx = 0;
+    int idx = 0;
     if (k > 1) {
         if (length(intersections[0][0] - curr_pos) < EPS) {
             // If both intersections are very close, use the second one
@@ -293,16 +293,16 @@ double2x3 compute_parallel_transport_edge(Mesh mesh, int curr_tri, int next_tri,
     return { dir_3d, normal };
 }
 
-Tuple<double3,uint,double3> compute_parallel_transport_vertex(Mesh mesh, int curr_tri, int vertex_id, double3 dir_3d, double3 curr_normal) {
+Tuple<double3,int,double3> compute_parallel_transport_vertex(Mesh mesh, int curr_tri, int vertex_id, double3 dir_3d, double3 curr_normal) {
     // Compute the parallel transport of a vector at a vertex.
-    StructuredBuffer<uint> connected_triangles = mesh.v2t[vertex_id];
+    StructuredBuffer<int> connected_triangles = mesh.v2t[vertex_id];
     double total_angle = 0.0;
     for (int k1 = 1; k1 < connected_triangles[0]+1; k1++) {
-        uint tri_id = connected_triangles[k1];
-        uint2 vertices = { 0, 0 };
+        int tri_id = connected_triangles[k1];
+        int2 vertices = { 0, 0 };
         int idx = 0;
         for (int k2 = 0; k2 < 3; k2++) {
-            uint v = mesh.triangles[tri_id][k2];
+            int v = mesh.triangles[tri_id][k2];
             if (v != vertex_id) {
                 vertices[idx++] = v;
             }
@@ -321,10 +321,10 @@ Tuple<double3,uint,double3> compute_parallel_transport_vertex(Mesh mesh, int cur
     double angle = 0;
 
     dir_3d = -dir_3d;
-    uint2 v;
+    int2 v;
     int k = 0;
     for (int k1 = 0; k1 < 3; k1++) {
-        uint vertex = mesh.triangles[curr_tri][k1];
+        int vertex = mesh.triangles[curr_tri][k1];
         if (vertex != vertex_id) {
             v[k++] = vertex;
         }
@@ -346,19 +346,19 @@ Tuple<double3,uint,double3> compute_parallel_transport_vertex(Mesh mesh, int cur
         n
     ));
 
-    uint v2, local_edge_index;
-    uint v1 = v[0];
+    int v2, local_edge_index;
+    int v1 = v[0];
     while (angle < half_angle) {
         for (int k = 0; k < 3; k++) {
-            uint vertex = mesh.triangles[curr_tri][k];
+            int vertex = mesh.triangles[curr_tri][k];
             if (vertex != vertex_id && vertex != v2) {
                 local_edge_index = (k + 1) % 3;
                 break;
             }
         }
-        uint next_tri = mesh.adjacencies[curr_tri][local_edge_index];
+        int next_tri = mesh.adjacencies[curr_tri][local_edge_index];
         for (int k = 0; k < 3; k++) {
-            uint vertex = mesh.triangles[curr_tri][k];
+            int vertex = mesh.triangles[curr_tri][k];
             if (vertex != vertex_id && vertex != v2) {
                 v2 = vertex;
                 break;
@@ -389,7 +389,7 @@ Tuple<double3,uint,double3> compute_parallel_transport_vertex(Mesh mesh, int cur
         angle += tri_angle;
     }
 
-    return makeTuple( double3(0, 0, 0), uint(0), curr_normal);
+    return makeTuple( double3(0, 0, 0), int(0), curr_normal);
 }
 
 double2 bary_to_uv(double3 bary) {
@@ -423,8 +423,8 @@ GeodesicPath straighest_geodesic(Mesh mesh, MeshPoint start, double3 dir) {
     double3 next_pos;
     MeshPoint curr_point = start;
     double3 tid_normal;
-    uint curr_tri = start.face;
-    uint next_tri;
+    int curr_tri = start.face;
+    int next_tri;
 
     while (len_path < path_len - EPS) {
         double3 tid_normal = mesh.triangle_normals[curr_tri];
@@ -452,12 +452,13 @@ GeodesicPath straighest_geodesic(Mesh mesh, MeshPoint start, double3 dir) {
         len_path += length(next_pos - curr_pos);
 
         if (is_vert_bary) {
-            uint v_idx = mesh.triangles[curr_tri][vert_idx];
+            int v_idx = mesh.triangles[curr_tri][vert_idx];
 
             // Transport the direction to the next triangle
-            Tuple<double3,uint,double3> res = compute_parallel_transport_vertex(mesh, curr_tri, v_idx, proj_dir, current_normal);
-            double3 dir = res._0, current_normal = res._2;
-            uint next_tri = res._1;
+            Tuple<double3,int,double3> res = compute_parallel_transport_vertex(mesh, curr_tri, v_idx, proj_dir, current_normal);
+            double3 dir = res._0;
+            double3 current_normal = res._2;
+            int next_tri = res._1;
 
             // Compute barycentric coordinates in the adjacent triangle
             double3 p0_adj = mesh.positions[mesh.triangles[next_tri][0]];
@@ -505,7 +506,8 @@ GeodesicPath straighest_geodesic(Mesh mesh, MeshPoint start, double3 dir) {
             // Transport the direction to the adjacent triangle
 
             double2x3 res_transport = compute_parallel_transport_edge(mesh, curr_tri, adj_tri, proj_dir, current_normal);
-            double3 dir = res_transport[0], current_normal = res_transport[1];
+            double3 dir = res_transport[0];
+            double3 current_normal = res_transport[1];
 
             // Update current state
             curr_tri = adj_tri;
