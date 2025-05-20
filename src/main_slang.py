@@ -6,21 +6,36 @@ from dataloader.mesh_loader import load_mesh_from_obj
 from constants import DATA_DIR
 
 
-def load_mesh(module, device):
+def load_mesh(module:spy.Module, device:spy.Device):
     mesh = load_mesh_from_obj(os.path.join(DATA_DIR,"cat_head.obj"))
     
-    positions = spy.NDBuffer(device, dtype=np.double, shape=mesh.positions.shape)
-    triangles = spy.NDBuffer(device, dtype=np.int32, shape=mesh.triangles.shape)
-    adjacencies = spy.NDBuffer(device, dtype=np.int32, shape=mesh.adjacencies.shape)
-    triangle_normals = spy.NDBuffer(device, dtype=np.double, shape=mesh.triangle_normals.shape)
-    v2t = spy.NDBuffer(device, dtype=np.double, shape=mesh.v2t.shape)
+    positions = device.create_buffer(
+        usage=spy.BufferUsage.shader_resource,
+        label="mesh_positions",
+        data=mesh.positions,
+    )
+    triangles = device.create_buffer(
+        usage=spy.BufferUsage.shader_resource,
+        label="mesh_triangles",
+        data=mesh.triangles,
+    )
+    adjacencies = device.create_buffer(
+        usage=spy.BufferUsage.shader_resource,
+        label="mesh_adjacencies",
+        data=mesh.adjacencies,
+    )
+    triangle_normals = device.create_buffer(
+        usage=spy.BufferUsage.shader_resource,
+        label="mesh_triangle_normals",
+        data=mesh.triangle_normals,
+    )
+    v2t = device.create_buffer(
+        usage=spy.BufferUsage.shader_resource,
+        label="mesh_v2t",
+        data=mesh.v2t,
+    )
 
-    positions.copy_from_numpy(mesh.positions)
-    triangles.copy_from_numpy(mesh.triangles)
-    adjacencies.copy_from_numpy(mesh.adjacencies)
-    triangle_normals.copy_from_numpy(triangle_normals)
-    v2t.copy_from_numpy(mesh.v2t)
-
+    # TODO: this doesn't work
     slang_mesh = module.Mesh(positions, triangles, adjacencies, triangle_normals, v2t)
     return slang_mesh
 
