@@ -57,22 +57,20 @@ def main():
     device = spy.create_device(include_paths=[curr_dir])
 
     # Load the module
-    module = spy.Module.load_from_file(device, os.path.join(curr_dir, "slang", "trace_geodesic.slang"))
+    module_path = os.path.join(curr_dir, "slang", "trace_geodesic.slang")
+    module = spy.Module.load_from_file(device, module_path)
 
     meshes = load_meshes(module, device)
 
-    meshpoints = spy.InstanceList(
-        struct=module.MeshPoint.as_struct(),
-        data={
-            "face":spy.int1(0), 
-            "uv":spy.float2(0.3,0.3),
-        }
+    meshpoint = module.MeshPoint(
+        face = 0,
+        uv = spy.float2(0.3,0.3),
     )
 
     dirs = spy.float3(1,1,1)
 
     # TODO: figure out how to call this
-    result = module.straighest_geodesic(meshes, meshpoints, dirs)
+    result = module.straighest_geodesic(meshes, meshpoint, dirs)
 
 
 if __name__ == "__main__":
