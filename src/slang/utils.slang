@@ -1,2 +1,0 @@
-implementing trace_geodesic;
-

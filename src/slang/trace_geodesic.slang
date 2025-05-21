@@ -1,27 +1,29 @@
-module trace_geodesic;
 
-const float EPS = 0.00001;
+const float EPS = 0.001;
 
 
 struct Mesh {
-    StructuredBuffer<float3> positions;
-    StructuredBuffer<int3> triangles;
-    StructuredBuffer<int3> adjacencies;
-    StructuredBuffer<float3> triangle_normals;
-    StructuredBuffer<StructuredBuffer<int>> v2t;
+    TensorView<float3> positions;
+    TensorView<int3> triangles;
+    TensorView<int3> adjacencies;
+    TensorView<float3> triangle_normals;
+    TensorView<int> v2t;
+    int v2t_shape0;
 
     __init(
-        StructuredBuffer<float3> positions,
-        StructuredBuffer<int3> triangles,
-        StructuredBuffer<int3> adjacencies,
-        StructuredBuffer<float3> triangle_normals,
-        StructuredBuffer<StructuredBuffer<int>> v2t,
+        TensorView<float3> positions,
+        TensorView<int3> triangles,
+        TensorView<int3> adjacencies,
+        TensorView<float3> triangle_normals,
+        TensorView<int> v2t,
+        int v2t_shape0,
     ) {
         this.positions = positions;
         this.triangles = triangles;
         this.adjacencies = adjacencies;
         this.triangle_normals = triangle_normals;
         this.v2t = v2t;
+        this.v2t_shape0 = v2t_shape0;
     }
 }
 
@@ -347,10 +349,10 @@ float2x3 compute_parallel_transport_edge(Mesh mesh, int curr_tri, int next_tri, 
 
 Tuple<float3,int,float3> compute_parallel_transport_vertex(Mesh mesh, int curr_tri, int vertex_id, float3 dir_3d, float3 curr_normal) {
     // Compute the parallel transport of a vector at a vertex.
-    StructuredBuffer<int> connected_triangles = mesh.v2t[vertex_id];
+    int n_connected_triangles = mesh.v2t[vertex_id*mesh.v2t_shape0];
     float total_angle = 0.0;
-    for (int k1 = 1; k1 < connected_triangles[0]+1; k1++) {
-        int tri_id = connected_triangles[k1];
+    for (int k1 = 1; k1 < n_connected_triangles+1; k1++) {
+        int tri_id = mesh.v2t[vertex_id*mesh.v2t_shape0+k1];
         int2 vertices = { 0, 0 };
         int idx = 0;
         for (int k2 = 0; k2 < 3; k2++) {

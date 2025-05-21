@@ -1,6 +1,7 @@
 import slangpy as spy
 import numpy as np
 import os
+import torch
 
 from dataloader.mesh_loader import load_mesh_from_obj
 from constants import DATA_DIR
@@ -12,38 +13,33 @@ def load_meshes(module:spy.Module, device:spy.Device):
     positions = device.create_buffer(
         usage=spy.BufferUsage.shader_resource,
         label="mesh_positions",
-        data=mesh.positions,
+        data=mesh.positions.astype(np.float32),
     )
     triangles = device.create_buffer(
         usage=spy.BufferUsage.shader_resource,
         label="mesh_triangles",
-        data=mesh.triangles,
+        data=mesh.triangles.astype(np.int32),
     )
     adjacencies = device.create_buffer(
         usage=spy.BufferUsage.shader_resource,
         label="mesh_adjacencies",
-        data=mesh.adjacencies,
+        data=mesh.adjacencies.astype(np.int32),
     )
     triangle_normals = device.create_buffer(
         usage=spy.BufferUsage.shader_resource,
         label="mesh_triangle_normals",
-        data=mesh.triangle_normals,
+        data=mesh.triangle_normals.astype(np.float32),
     )
     v2t = device.create_buffer(
         usage=spy.BufferUsage.shader_resource,
         label="mesh_v2t",
-        data=mesh.v2t,
+        data=mesh.v2t.flatten().astype(np.int32),
     )
 
-    slang_meshes = spy.InstanceList(
-        struct=module.Mesh.as_struct(),
-        data={
-            "positions":positions, 
-            "triangles":triangles, 
-            "adjacencies":adjacencies,
-            "triangle_normals":triangle_normals,
-            "v2t":v2t,
-        }
+    # positions = [spy.float3(x) for x in mesh.positions]
+
+    slang_meshes = module.Mesh(
+        positions = torch.tensor(mesh.positions.astype(np.float32)), 
     )
 
     return slang_meshes
@@ -54,11 +50,11 @@ def main():
     curr_dir = os.path.dirname(os.path.abspath(__file__))
 
     # Create an SGL device with the local folder for slangpy includes
-    device = spy.create_device(include_paths=[curr_dir])
+    device = spy.create_device(include_paths=[curr_dir], enable_cuda_interop=True)
 
     # Load the module
     module_path = os.path.join(curr_dir, "slang", "trace_geodesic.slang")
-    module = spy.Module.load_from_file(device, module_path)
+    module = spy.TorchModule.load_from_file(device, module_path)
 
     meshes = load_meshes(module, device)
 
@@ -67,10 +63,9 @@ def main():
         uv = spy.float2(0.3,0.3),
     )
 
-    dirs = spy.float3(1,1,1)
+    dirs = spy.float3(0,0,0)
 
-    # TODO: figure out how to call this
-    result = module.straighest_geodesic(meshes, meshpoint, dirs)
+    # result = module.straighest_geodesic(meshes, meshpoint, dirs)
 
 
 if __name__ == "__main__":

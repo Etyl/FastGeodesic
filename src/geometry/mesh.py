@@ -7,11 +7,11 @@ from constants import MAX_ADJACENT_VERTICES
 
 class Mesh:
     def __init__(self):
-        self.positions: Optional[np.ndarray] = None
-        self.triangles: Optional[np.ndarray] = None
-        self.adjacencies: Optional[np.ndarray] = None
-        self.triangle_normals: Optional[np.ndarray] = None
-        self.v2t: Optional[np.ndarray] = None
+        self.positions: np.ndarray = None
+        self.triangles: np.ndarray = None
+        self.adjacencies: np.ndarray = None
+        self.triangle_normals: np.ndarray = None
+        self.v2t: np.ndarray = None
 
     def build(self):
         """Build the mesh by computing necessary properties."""
