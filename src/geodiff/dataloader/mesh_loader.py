@@ -4,7 +4,6 @@ from pathlib import Path
 import trimesh
 
 from geodiff.geometry.mesh import Mesh
-from geodiff.constants import DATA_DIR
 
 
 def create_triangle() -> Mesh:
