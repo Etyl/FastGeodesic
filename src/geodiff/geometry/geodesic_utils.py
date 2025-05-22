@@ -41,31 +41,6 @@ def tri_bary_coords(p0, p1, p2, p) -> NDArray[np.float64]:
   
     return np.array([u, v, w])
 
-def point_is_edge(point: MeshPoint) -> Tuple[bool,int]:
-    """Check if a mesh point is on an edge and return the edge index."""
-    uv = point.uv
-    
-    if abs(uv[0]) < EPS:
-        return True, 2
-    if abs(uv[1]) < EPS:
-        return True, 0
-    if abs(1 - uv[0] - uv[1]) < EPS:
-        return True, 1
-    
-    return False, -1
-
-def point_is_vert(point: MeshPoint) -> Tuple[bool,int]:
-    """Check if a mesh point is on a vertex and return the vertex index."""
-    uv = point.uv
-    
-    if abs(uv[0]) < EPS and abs(uv[1]) < EPS:
-        return True, 0
-    if abs(uv[0] - 1.0) < EPS and abs(uv[1]) < EPS:
-        return True, 1
-    if abs(uv[0]) < EPS and abs(uv[1] - 1.0) < EPS:
-        return True, 2
-    
-    return False, -1
 
 def bary_is_edge(bary) -> Tuple[bool,int]:
     """Check if barycentric coordinates are on an edge and return the edge index."""
@@ -376,7 +351,7 @@ def bary_to_uv(bary:NDArray[np.float64]) -> NDArray[np.float64]:
     return np.array([bary[1], bary[2]])
 
 
-def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:NDArray[np.float64]) -> GeodesicPath:
+def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:NDArray[np.float64]) -> Tuple[MeshPoint, NDArray[np.float64], NDArray[np.float64]]:
     """
     Compute the straightest geodesic path on a mesh.
     
@@ -512,13 +487,5 @@ def straightest_geodesic(mesh:Mesh, start:MeshPoint, dir:NDArray[np.float64]) ->
             dirs.append(dir)
             normals.append(current_normal)
     
-    # Set the end point
-    geodesic = GeodesicPath(
-        start=start,
-        end = curr_point,
-        path = path,
-        dirs = dirs,
-        normals = normals,
-    )    
-    return geodesic
+    return curr_point, dir, current_normal
 
